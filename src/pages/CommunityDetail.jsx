@@ -1,92 +1,51 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
-import { useParams, Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MapPin, Clock, User, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useData } from '@/contexts/DataContext';
+
+const normalizeImages = (community) => {
+  const images = Array.isArray(community?.images) ? community.images : [];
+  return images
+    .map((image, index) => {
+      if (!image) return null;
+      if (typeof image === 'string') {
+        return {
+          src: image,
+          alt: `${community?.name || 'Comunidade'} - Foto ${index + 1}`,
+        };
+      }
+      if (!image.src) return null;
+      return {
+        ...image,
+        alt: image.alt || `${community?.name || 'Comunidade'} - Foto ${index + 1}`,
+      };
+    })
+    .filter(Boolean);
+};
+
+const buildMassEntries = (community) => {
+  if (Array.isArray(community?.masses)) {
+    return community.masses.map((mass) => `${mass.day}: ${mass.time}`);
+  }
+  if (!community?.massTimes) return [];
+  return community.massTimes
+    .split(/\r?\n|;/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+};
 
 const CommunityDetail = () => {
   const { id } = useParams();
+  const { siteData, loading } = useData();
 
-  const communitiesData = {
-    'nossa-senhora-das-gracas': {
-      name: 'Nossa Senhora das Graças',
-      description: 'A Comunidade Nossa Senhora das Graças é um espaço de fé e acolhimento, onde celebramos a presença maternal de Maria em nossas vidas. Nossa comunidade se dedica à oração, à evangelização e ao serviço aos mais necessitados.',
-      address: 'Rua das Graças, 123 - Nova Parnamirim, Parnamirim/RN',
-      masses: [
-        { day: 'Domingo', time: '8h00' },
-        { day: 'Quarta-feira', time: '19h00' }
-      ],
-      coordinator: 'Maria das Graças Silva',
-      images: [
-        'Community church of Nossa Senhora das Graças exterior view',
-        'Mass celebration at Nossa Senhora das Graças community',
-        'Community members gathering for prayer'
-      ]
-    },
-    'nossa-senhora-auxiliadora': {
-      name: 'Nossa Senhora Auxiliadora',
-      description: 'Sob a proteção de Nossa Senhora Auxiliadora, nossa comunidade busca viver o Evangelho através da educação na fé, especialmente voltada para os jovens. Seguimos o carisma salesiano de Dom Bosco.',
-      address: 'Rua Auxiliadora, 456 - Nova Parnamirim, Parnamirim/RN',
-      masses: [
-        { day: 'Domingo', time: '10h00' },
-        { day: 'Sexta-feira', time: '19h00' }
-      ],
-      coordinator: 'João Paulo Santos',
-      images: [
-        'Nossa Senhora Auxiliadora chapel with youth group',
-        'Salesian youth activities in the community',
-        'Community celebration with families'
-      ]
-    },
-    'santa-dulce-dos-pobres': {
-      name: 'Santa Dulce dos Pobres',
-      description: 'Inspirados pelo exemplo de caridade de Santa Dulce dos Pobres, nossa comunidade se dedica ao serviço aos mais necessitados, promovendo ações sociais e obras de misericórdia.',
-      address: 'Rua da Caridade, 789 - Nova Parnamirim, Parnamirim/RN',
-      masses: [
-        { day: 'Domingo', time: '17h00' },
-        { day: 'Quinta-feira', time: '19h00' }
-      ],
-      coordinator: 'Ana Paula Oliveira',
-      images: [
-        'Community charity work helping the poor',
-        'Santa Dulce community social action',
-        'Volunteers serving meals to the needy'
-      ]
-    },
-    'sao-joao-paulo-ii': {
-      name: 'São João Paulo II',
-      description: 'Nossa comunidade segue os ensinamentos de São João Paulo II, promovendo a nova evangelização e o protagonismo juvenil. Somos uma comunidade jovem e missionária.',
-      address: 'Rua João Paulo, 321 - Nova Parnamirim, Parnamirim/RN',
-      masses: [
-        { day: 'Domingo', time: '19h00' },
-        { day: 'Terça-feira', time: '19h00' }
-      ],
-      coordinator: 'Pedro Henrique Costa',
-      images: [
-        'Youth mass at São João Paulo II community',
-        'Young people in evangelization mission',
-        'Community prayer group meeting'
-      ]
-    },
-    'sagrado-coracao-de-jesus': {
-      name: 'Sagrado Coração de Jesus',
-      description: 'Devotos ao Sagrado Coração de Jesus, nossa comunidade cultiva a espiritualidade do amor misericordioso de Cristo, promovendo adoração eucarística e obras de caridade.',
-      address: 'Rua do Coração, 654 - Nova Parnamirim, Parnamirim/RN',
-      masses: [
-        { day: 'Domingo', time: '7h00' },
-        { day: 'Primeira Sexta-feira', time: '19h00' }
-      ],
-      coordinator: 'José Carlos Ferreira',
-      images: [
-        'Sacred Heart of Jesus altar in the community',
-        'Eucharistic adoration at the community',
-        'Community members in prayer before the Blessed Sacrament'
-      ]
-    }
-  };
+  if (loading) {
+    return <div>Carregando...</div>;
+  }
 
-  const community = communitiesData[id];
+  const community = siteData.communities.find((item) => item.id === id);
 
   if (!community) {
     return (
@@ -99,11 +58,14 @@ const CommunityDetail = () => {
     );
   }
 
+  const galleryImages = normalizeImages(community);
+  const massEntries = buildMassEntries(community);
+
   return (
     <>
       <Helmet>
         <title>{community.name} - Paróquia de Nossa Senhora da Conceição</title>
-        <meta name="description" content={community.description} />
+        <meta name="description" content={community.description || 'Conheça nossa comunidade.'} />
       </Helmet>
 
       <div className="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-12">
@@ -128,11 +90,7 @@ const CommunityDetail = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-8"
-              >
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Sobre a Comunidade</h2>
                 <p className="text-gray-600 leading-relaxed">{community.description}</p>
               </motion.div>
@@ -144,13 +102,20 @@ const CommunityDetail = () => {
                 className="mb-8"
               >
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Galeria de Fotos</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {community.images.map((image, index) => (
-                    <div key={index} className="rounded-lg overflow-hidden shadow-lg">
-                      <img className="w-full h-48 object-cover" alt={`${community.name} - Foto ${index + 1}`} src="https://images.unsplash.com/photo-1595872018818-97555653a011" />
-                    </div>
-                  ))}
-                </div>
+                {galleryImages.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {galleryImages.map((image, index) => (
+                      <div
+                        key={image.path || image.src || index}
+                        className="rounded-lg overflow-hidden shadow-lg"
+                      >
+                        <img className="w-full h-48 object-cover" alt={image.alt} src={image.src} />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">Nenhuma foto cadastrada para esta comunidade.</p>
+                )}
               </motion.div>
             </div>
 
@@ -161,7 +126,7 @@ const CommunityDetail = () => {
                 className="bg-blue-50 rounded-xl p-6 sticky top-24"
               >
                 <h3 className="text-xl font-bold text-gray-800 mb-4">Informações</h3>
-                
+
                 <div className="space-y-4">
                   <div className="flex items-start space-x-3">
                     <MapPin className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
@@ -175,11 +140,15 @@ const CommunityDetail = () => {
                     <Clock className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
                     <div>
                       <p className="font-semibold text-gray-800 mb-2">Horário de Missas</p>
-                      {community.masses.map((mass, index) => (
-                        <p key={index} className="text-gray-600 text-sm">
-                          {mass.day}: {mass.time}
-                        </p>
-                      ))}
+                      {massEntries.length > 0 ? (
+                        massEntries.map((entry, index) => (
+                          <p key={index} className="text-gray-600 text-sm">
+                            {entry}
+                          </p>
+                        ))
+                      ) : (
+                        <p className="text-gray-600 text-sm">Horários não informados.</p>
+                      )}
                     </div>
                   </div>
 
@@ -194,9 +163,7 @@ const CommunityDetail = () => {
 
                 <div className="mt-6 pt-6 border-t border-blue-200">
                   <Link to="/contato">
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                      Entre em Contato
-                    </Button>
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700">Entre em Contato</Button>
                   </Link>
                 </div>
               </motion.div>

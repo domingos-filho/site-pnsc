@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, User, LogOut, LayoutDashboard } from 'lucide-react';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, LogOut, Menu, User, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -12,15 +11,30 @@ const Header = () => {
   const navigate = useNavigate();
 
   const menuItems = [
-    { name: 'Início', path: '/' },
+    { name: 'Início', path: '/', end: true },
     { name: 'Comunidades', path: '/comunidades' },
     { name: 'Pastorais', path: '/pastorais' },
     { name: 'Galeria', path: '/galeria' },
     { name: 'Agenda', path: '/agenda' },
     { name: 'Quem Somos', path: '/quem-somos' },
-    { name: 'Equipe', path: '/equipe' },
+    { name: 'Adm. Paroquial', path: '/equipe' },
     { name: 'Contato', path: '/contato' },
   ];
+  const getDesktopLinkClass = ({ isActive }) =>
+    [
+      'relative inline-flex items-center justify-center px-3 py-2 text-sm font-medium transition-all duration-200',
+      isActive
+        ? 'text-blue-700 font-semibold after:content-[\"\"] after:absolute after:-bottom-2 after:left-1/2 after:-translate-x-1/2 after:w-6 after:h-1 after:rounded-full after:bg-blue-600'
+        : 'text-gray-700 hover:text-blue-600',
+    ].join(' ');
+
+  const getMobileLinkClass = ({ isActive }) =>
+    [
+      'block py-2 px-3 rounded-lg transition-colors',
+      isActive
+        ? 'text-blue-700 font-semibold bg-blue-50 border-l-4 border-blue-600'
+        : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50',
+    ].join(' ');
 
   const handleLogout = () => {
     logout();
@@ -32,28 +46,29 @@ const Header = () => {
       <nav className="container mx-auto px-4">
         <div className="flex items-center justify-between h-24">
           <Link to="/" className="flex items-center space-x-3 h-full">
-            <img 
-              src="https://horizons-cdn.hostinger.com/8926cfa8-6425-4293-b55f-e15069c2a814/105e1d822f2ce62f221e65e8659a802a.png" 
-              alt="Brasão da Paróquia" 
+            <img
+              src="https://horizons-cdn.hostinger.com/8926cfa8-6425-4293-b55f-e15069c2a814/105e1d822f2ce62f221e65e8659a802a.png"
+              alt="Brasão da Paróquia"
               className="h-full py-2 object-contain"
             />
             <div className="flex flex-col -space-y-1">
               <span className="text-lg font-bold text-blue-800">Paróquia de Nossa Senhora da</span>
-              <span className="text-4xl text-blue-600 font-Amoresa">Conceição</span>
+              <span className="text-4xl text-blue-600 font-priestacy font-bold">Conceição</span>
             </div>
           </Link>
 
           <div className="hidden lg:flex items-center space-x-4">
             {menuItems.map((item) => (
-              <Link
+              <NavLink
                 key={item.path}
                 to={item.path}
-                className="text-gray-700 hover:text-blue-600 transition-colors font-medium text-sm"
+                end={item.end}
+                className={getDesktopLinkClass}
               >
                 {item.name}
-              </Link>
+              </NavLink>
             ))}
-            
+
             <div className="w-px h-6 bg-gray-200" />
 
             {user && isMember ? (
@@ -79,10 +94,7 @@ const Header = () => {
             )}
           </div>
 
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="lg:hidden text-gray-700 hover:text-blue-600"
-          >
+          <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden text-gray-700 hover:text-blue-600">
             {isOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
@@ -96,14 +108,15 @@ const Header = () => {
               className="lg:hidden mt-4 pb-4"
             >
               {menuItems.map((item) => (
-                <Link
+                <NavLink
                   key={item.path}
                   to={item.path}
-                  className="block py-2 text-gray-700 hover:text-blue-600 transition-colors"
+                  end={item.end}
+                  className={getMobileLinkClass}
                   onClick={() => setIsOpen(false)}
                 >
                   {item.name}
-                </Link>
+                </NavLink>
               ))}
               <div className="border-t my-2" />
               {user && isMember ? (
@@ -143,3 +156,4 @@ const Header = () => {
 };
 
 export default Header;
+

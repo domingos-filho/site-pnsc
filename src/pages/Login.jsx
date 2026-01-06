@@ -19,18 +19,18 @@ const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const result = login(email, password);
-    
+
     if (result.success) {
       toast({
-        title: "Login realizado!",
-        description: "Bem-vindo de volta!",
+        title: 'Login realizado!',
+        description: 'Bem-vindo de volta!',
       });
       navigate('/dashboard');
     } else {
       toast({
-        title: "Erro no login",
+        title: 'Erro no login',
         description: result.error,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
@@ -49,10 +49,10 @@ const Login = () => {
           className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md"
         >
           <div className="text-center mb-8">
-            <img 
-              src="https://horizons-cdn.hostinger.com/8926cfa8-6425-4293-b55f-e15069c2a814/105e1d822f2ce62f221e65e8659a802a.png" 
-              alt="Brasão da Paróquia" 
-              className="h-16 w-16 mx-auto mb-4"
+            <img
+              src="https://horizons-cdn.hostinger.com/8926cfa8-6425-4293-b55f-e15069c2a814/105e1d822f2ce62f221e65e8659a802a.png"
+              alt="Brasão da Paróquia"
+              className="h-24 w-24 mx-auto mb-4"
             />
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Área de Login</h1>
             <p className="text-gray-600">Acesse sua conta</p>
@@ -92,14 +92,10 @@ const Login = () => {
           </form>
 
           <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-2">
-              <strong>Credenciais de teste:</strong>
-            </p>
+            <p className="text-sm text-gray-700 font-semibold mb-2">Importante:</p>
             <p className="text-xs text-gray-600">
-              Admin: pnsc.arquivos@gmail.com / admin123
-            </p>
-            <p className="text-xs text-gray-600">
-              Membro: qualquer@email.com / membro123
+              Voce coordenador/Aticulador que precisa gerenciar o site, entre em contato com a nossa
+              PASCOM para adquirir suas credenciais!
             </p>
           </div>
         </motion.div>

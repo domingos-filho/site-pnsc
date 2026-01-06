@@ -23,22 +23,38 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Carrega o usuário logado
-    const storedUser = localStorage.getItem('paroquia_user');
+    const safeParse = (value, fallback) => {
+      if (!value) return fallback;
+      try {
+        return JSON.parse(value);
+      } catch (error) {
+        return fallback;
+      }
+    };
+
+    // Carrega o usuario logado
+    const storedUserRaw = localStorage.getItem('paroquia_user');
+    const storedUser = safeParse(storedUserRaw, null);
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      setUser(storedUser);
+    } else if (storedUserRaw) {
+      localStorage.removeItem('paroquia_user');
     }
 
-    // Carrega a lista de todos os usuários
-    const storedUsers = localStorage.getItem('paroquia_users_list');
-    if (storedUsers) {
-      setUsersState(JSON.parse(storedUsers));
+    // Carrega a lista de todos os usuarios
+    const storedUsersRaw = localStorage.getItem('paroquia_users_list');
+    const storedUsers = safeParse(storedUsersRaw, null);
+    if (Array.isArray(storedUsers)) {
+      setUsersState(storedUsers);
     } else {
-      // Se não houver lista, inicializa com os dados padrão
+      if (storedUsersRaw) {
+        localStorage.removeItem('paroquia_users_list');
+      }
+      // Se nao houver lista, inicializa com os dados padrao
       setUsersState(initialUsers);
       localStorage.setItem('paroquia_users_list', JSON.stringify(initialUsers));
     }
-    
+
     setLoading(false);
   }, []);
 
@@ -77,3 +93,5 @@ export const AuthProvider = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+
+
