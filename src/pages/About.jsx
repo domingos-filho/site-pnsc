@@ -6,22 +6,33 @@ import { useData } from '@/contexts/DataContext';
 
 const AboutCard = ({ icon, title, children, delay }) => {
   const IconComponent = icon;
+
   return (
-    <motion.div
-      className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      viewport={{ once: true }}
-    >
-      <div className="p-4 bg-blue-100 rounded-full mb-4">
-        <IconComponent className="h-8 w-8 text-blue-800" />
+  <div className="w-full">
+    <div className="mx-auto w-full max-w-4xl">
+      <div className="relative w-full overflow-hidden rounded-xl shadow-2xl aspect-video">
+        <iframe
+          className="absolute inset-0 h-full w-full"
+          src={embedUrl}
+          title="YouTube video player"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
+        />
       </div>
-      <h3 className="text-2xl font-bold text-gray-800 mb-2">{title}</h3>
-      <p className="text-gray-600 leading-relaxed">{children}</p>
-    </motion.div>
-  );
-};
+
+      <p className="mt-3 text-sm text-gray-500 text-center">
+        Se o vídeo não carregar,{" "}
+        <a className="text-blue-700 hover:underline" href={watchUrl} target="_blank" rel="noreferrer">
+          abra diretamente no YouTube
+        </a>
+        .
+      </p>
+    </div>
+  </div>
+);
+
 
 const YouTubeVideo = ({ url }) => {
   if (!url) return null;
