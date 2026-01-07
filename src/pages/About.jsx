@@ -8,30 +8,28 @@ const AboutCard = ({ icon, title, children, delay }) => {
   const IconComponent = icon;
 
   return (
-  <div className="w-full">
-    <div className="mx-auto w-full max-w-4xl">
-      <div className="relative w-full overflow-hidden rounded-xl shadow-2xl aspect-video">
+    <div>
+      <div className="w-full relative" style={{ paddingTop: '36.25%' }}>
         <iframe
-          className="absolute inset-0 h-full w-full"
+          className="absolute top-0 left-0 w-full h-full rounded-xl shadow-2xl"
           src={embedUrl}
           title="YouTube video player"
           frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           referrerPolicy="strict-origin-when-cross-origin"
           allowFullScreen
-        />
+        ></iframe>
       </div>
-
       <p className="mt-3 text-sm text-gray-500 text-center">
-        Se o vídeo não carregar,{" "}
+        Se o vídeo não carregar,{' '}
         <a className="text-blue-700 hover:underline" href={watchUrl} target="_blank" rel="noreferrer">
           abra diretamente no YouTube
         </a>
         .
       </p>
     </div>
-  </div>
-);
+  );
+};
 
 
 const YouTubeVideo = ({ url }) => {
