@@ -31,10 +31,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { deleteStoragePaths, isSupabaseReady, uploadImageFile } from '@/lib/supabaseStorage';
 
+<meta charset="UTF-8" />
+
 const showSyncWarning = (toast) => {
   toast({
     title: 'Aviso',
-    description: 'AlteraÁıes salvas localmente, mas n„o foi possÌvel sincronizar com o Supabase.',
+    description: 'Altera√ß√µes salvas localmente, mas n√£o foi poss√≠vel sincronizar com o Supabase.',
   });
 };
 
@@ -60,7 +62,7 @@ const CrudItem = ({ item, onEdit, onDelete, children }) => (
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-            <AlertDialogDescription>Esta aÁ„o n„o pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogDescription>Esta a√ß√£o n√£o pode ser desfeita.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -141,7 +143,7 @@ const SettingsHomePage = () => {
     if ((hasHeroUpload || hasPatronessUpload) && !isSupabaseReady) {
       toast({
         title: 'Erro',
-        description: 'Supabase n„o configurado para upload.',
+        description: 'Supabase n√£o configurado para upload.',
         variant: 'destructive',
       });
       return;
@@ -191,7 +193,7 @@ const SettingsHomePage = () => {
           try {
             await deleteStoragePaths([siteData.home.patronessImagePath]);
           } catch (error) {
-            toast({ title: 'Aviso', description: 'N„o foi possÌvel remover a imagem antiga.' });
+            toast({ title: 'Aviso', description: 'N√£o foi poss√≠vel remover a imagem antiga.' });
           }
         }
       }
@@ -225,12 +227,12 @@ const SettingsHomePage = () => {
       if (!result.ok) {
         showSyncWarning(toast);
       } else {
-        toast({ title: 'Sucesso!', description: 'P·gina inicial atualizada.' });
+        toast({ title: 'Sucesso!', description: 'P√°gina inicial atualizada.' });
       }
     } catch (error) {
       toast({
         title: 'Erro',
-        description: error?.message || 'Falha ao salvar as alteraÁıes.',
+        description: error?.message || 'Falha ao salvar as altera√ß√µes.',
         variant: 'destructive',
       });
     } finally {
@@ -244,7 +246,7 @@ const SettingsHomePage = () => {
       try {
         await deleteStoragePaths([imageToDelete.path]);
       } catch (error) {
-        toast({ title: 'Aviso', description: 'N„o foi possÌvel remover a imagem do storage.' });
+        toast({ title: 'Aviso', description: 'N√£o foi poss√≠vel remover a imagem do storage.' });
       }
     }
     if (imageToDelete && imageToDelete.src.startsWith('blob:')) {
@@ -332,7 +334,7 @@ const SettingsHomePage = () => {
       </div>
 
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">SeÁ„o da Padroeira</h3>
+        <h3 className="text-lg font-semibold">Se√ß√£o da Padroeira</h3>
         <div className="space-y-2">
           <Label htmlFor="patronessText">Texto da Padroeira</Label>
           <Textarea
@@ -380,7 +382,7 @@ const SettingsHomePage = () => {
         </div>
       </div>
       <Button type="submit" disabled={isSaving}>
-        {isSaving ? 'Salvando...' : 'Salvar alteraÁıes da p·gina inicial'}
+        {isSaving ? 'Salvando...' : 'Salvar altera√ß√µes da p√°gina inicial'}
       </Button>
     </form>
   );
@@ -470,7 +472,7 @@ const SettingsCommunities = () => {
     if (communityFiles.length > 0 && !isSupabaseReady) {
       toast({
         title: 'Erro',
-        description: 'Supabase n„o configurado para upload.',
+        description: 'Supabase n√£o configurado para upload.',
         variant: 'destructive',
       });
       return;
@@ -531,7 +533,7 @@ const SettingsCommunities = () => {
           try {
             await deleteStoragePaths([...new Set(removedPaths)]);
           } catch (error) {
-            toast({ title: 'Aviso', description: 'N„o foi possÌvel remover imagens do storage.' });
+            toast({ title: 'Aviso', description: 'N√£o foi poss√≠vel remover imagens do storage.' });
           }
         }
       }
@@ -572,14 +574,14 @@ const SettingsCommunities = () => {
         try {
           await deleteStoragePaths([...new Set(removedPaths)]);
         } catch (error) {
-          toast({ title: 'Aviso', description: 'N„o foi possÌvel remover imagens do storage.' });
+          toast({ title: 'Aviso', description: 'N√£o foi poss√≠vel remover imagens do storage.' });
         }
       }
     }
     if (!result.ok) {
       showSyncWarning(toast);
     } else {
-      toast({ title: 'Sucesso!', description: 'Comunidade excluÌda.' });
+      toast({ title: 'Sucesso!', description: 'Comunidade exclu√≠da.' });
     }
   };
 
@@ -628,15 +630,15 @@ const SettingsCommunities = () => {
               <Input id="name" name="name" defaultValue={currentItem?.name} required />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="description">DescriÁ„o/HistÛrico</Label>
+              <Label htmlFor="description">Descri√ß√£o/Hist√≥rico</Label>
               <Textarea id="description" name="description" defaultValue={currentItem?.description} />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="address">EndereÁo</Label>
+              <Label htmlFor="address">Endere√ßo</Label>
               <Input id="address" name="address" defaultValue={currentItem?.address} />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="massTimes">Hor·rio de Missas</Label>
+              <Label htmlFor="massTimes">Hor√°rio de Missas</Label>
               <Input id="massTimes" name="massTimes" defaultValue={currentItem?.massTimes} />
             </div>
             <div className="space-y-1">
@@ -774,11 +776,11 @@ const SettingsPastorals = () => {
     if (!result.ok) {
       showSyncWarning(toast);
     } else {
-      toast({ title: 'Sucesso!', description: 'Item excluÌdo.' });
+      toast({ title: 'Sucesso!', description: 'Item exclu√≠do.' });
     }
   };
 
-  const categories = { pastorais: 'Pastorais', movimentos: 'Movimentos', servicos: 'ServiÁos' };
+  const categories = { pastorais: 'Pastorais', movimentos: 'Movimentos', servicos: 'Servi√ßos' };
 
   return (
     <div className="space-y-8">
@@ -831,7 +833,7 @@ const SettingsPastorals = () => {
               <Textarea id="objective" name="objective" defaultValue={currentItem?.objective} />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="responsible">Respons·veis</Label>
+              <Label htmlFor="responsible">Respons√°veis</Label>
               <Input id="responsible" name="responsible" defaultValue={currentItem?.responsible} />
             </div>
             <div className="space-y-1">
@@ -839,7 +841,7 @@ const SettingsPastorals = () => {
               <Input id="howToParticipate" name="howToParticipate" defaultValue={currentItem?.howToParticipate} />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="meeting">Dia e Hor·rio</Label>
+              <Label htmlFor="meeting">Dia e Hor√°rio</Label>
               <Input id="meeting" name="meeting" defaultValue={currentItem?.meeting} />
             </div>
             <DialogFooter>
@@ -908,7 +910,7 @@ const SettingsTeam = () => {
     if (imageFile && !isSupabaseReady) {
       toast({
         title: 'Erro',
-        description: 'Supabase n„o configurado para upload.',
+        description: 'Supabase n√£o configurado para upload.',
         variant: 'destructive',
       });
       return;
@@ -928,7 +930,7 @@ const SettingsTeam = () => {
           try {
             await deleteStoragePaths([currentItem.imagePath]);
           } catch (error) {
-            toast({ title: 'Aviso', description: 'N„o foi possÌvel remover a imagem antiga.' });
+            toast({ title: 'Aviso', description: 'N√£o foi poss√≠vel remover a imagem antiga.' });
           }
         }
 
@@ -983,7 +985,7 @@ const SettingsTeam = () => {
       try {
         await deleteStoragePaths([itemToDelete.imagePath]);
       } catch (error) {
-        toast({ title: 'Aviso', description: 'N„o foi possÌvel remover a imagem do storage.' });
+        toast({ title: 'Aviso', description: 'N√£o foi poss√≠vel remover a imagem do storage.' });
       }
     }
     if (itemToDelete?.image && itemToDelete.image.startsWith('blob:')) {
@@ -1042,7 +1044,7 @@ const SettingsTeam = () => {
               <Input id="name" name="name" defaultValue={currentItem?.name} required />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="role">FunÁ„o</Label>
+              <Label htmlFor="role">Fun√ß√£o</Label>
               <Input id="role" name="role" defaultValue={currentItem?.role} />
             </div>
             <div className="space-y-1">
@@ -1059,7 +1061,7 @@ const SettingsTeam = () => {
                 <input {...getInputProps()} />
                 <UploadCloud className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                 {isDragActive ? <p>Solte a foto aqui...</p> : <p>Arraste uma foto ou clique para selecionar</p>}
-                <p className="text-xs text-gray-500 mt-1">RecomendaÁ„o: proporÁ„o 3:4</p>
+                <p className="text-xs text-gray-500 mt-1">Recomenda√ß√£o: propor√ß√£o 3:4</p>
               </div>
               <div className="flex items-center gap-4 mt-4">
                 <div>
@@ -1140,7 +1142,7 @@ const SettingsContactAbout = () => {
     if (mapFile && !isSupabaseReady) {
       toast({
         title: 'Erro',
-        description: 'Supabase n„o configurado para upload.',
+        description: 'Supabase n√£o configurado para upload.',
         variant: 'destructive',
       });
       return;
@@ -1160,7 +1162,7 @@ const SettingsContactAbout = () => {
           try {
             await deleteStoragePaths([siteData.contact.mapImagePath]);
           } catch (error) {
-            toast({ title: 'Aviso', description: 'N„o foi possÌvel remover a imagem anterior.' });
+            toast({ title: 'Aviso', description: 'N√£o foi poss√≠vel remover a imagem anterior.' });
           }
         }
       }
@@ -1170,7 +1172,7 @@ const SettingsContactAbout = () => {
           try {
             await deleteStoragePaths([mapImagePath]);
           } catch (error) {
-            toast({ title: 'Aviso', description: 'N„o foi possÌvel remover a imagem do mapa.' });
+            toast({ title: 'Aviso', description: 'N√£o foi poss√≠vel remover a imagem do mapa.' });
           }
         }
         mapImageUrl = null;
@@ -1210,7 +1212,7 @@ const SettingsContactAbout = () => {
       if (!result.ok) {
         showSyncWarning(toast);
       } else {
-        toast({ title: 'Sucesso!', description: 'InformaÁıes atualizadas.' });
+        toast({ title: 'Sucesso!', description: 'Informa√ß√µes atualizadas.' });
       }
 
       if (mapFile?.preview) {
@@ -1221,7 +1223,7 @@ const SettingsContactAbout = () => {
     } catch (error) {
       toast({
         title: 'Erro',
-        description: error?.message || 'Falha ao salvar as informaÁıes.',
+        description: error?.message || 'Falha ao salvar as informa√ß√µes.',
         variant: 'destructive',
       });
     } finally {
@@ -1232,21 +1234,21 @@ const SettingsContactAbout = () => {
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="space-y-4">
-        <h3 className="text-xl font-bold">P·gina "Quem Somos"</h3>
+        <h3 className="text-xl font-bold">P√°gina "Quem Somos"</h3>
         <div className="space-y-1">
-          <Label htmlFor="youtubeVideoUrl">Link do VÌdeo do YouTube</Label>
+          <Label htmlFor="youtubeVideoUrl">Link do V√≠deo do YouTube</Label>
           <Input id="youtubeVideoUrl" name="youtubeVideoUrl" defaultValue={siteData.about.youtubeVideoUrl} />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="history">HistÛria</Label>
+          <Label htmlFor="history">Hist√≥ria</Label>
           <Textarea id="history" name="history" defaultValue={siteData.about.history} rows={5} />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="mission">Miss„o</Label>
+          <Label htmlFor="mission">Miss√£o</Label>
           <Textarea id="mission" name="mission" defaultValue={siteData.about.mission} />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="vision">Vis„o</Label>
+          <Label htmlFor="vision">Vis√£o</Label>
           <Textarea id="vision" name="vision" defaultValue={siteData.about.vision} />
         </div>
         <div className="space-y-1">
@@ -1255,9 +1257,9 @@ const SettingsContactAbout = () => {
         </div>
       </div>
       <div className="space-y-4">
-        <h3 className="text-xl font-bold">InformaÁıes de Contato</h3>
+        <h3 className="text-xl font-bold">Informa√ß√µes de Contato</h3>
         <div className="space-y-1">
-          <Label htmlFor="address">EndereÁo</Label>
+          <Label htmlFor="address">Endere√ßo</Label>
           <Input id="address" name="address" defaultValue={siteData.contact.address} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1323,7 +1325,7 @@ const SettingsContactAbout = () => {
             )}
           </div>
           {removeMapImage && (
-            <p className="text-sm text-red-500">A imagem atual ser· removida ao salvar.</p>
+            <p className="text-sm text-red-500">A imagem atual ser√° removida ao salvar.</p>
           )}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1336,12 +1338,12 @@ const SettingsContactAbout = () => {
             <Input id="email" name="email" type="email" defaultValue={siteData.contact.email} />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="whatsapp">WhatsApp (somente n˙meros)</Label>
+            <Label htmlFor="whatsapp">WhatsApp (somente n√∫meros)</Label>
             <Input id="whatsapp" name="whatsapp" defaultValue={siteData.contact.whatsapp} />
           </div>
         </div>
         <div className="space-y-1">
-          <Label htmlFor="officeHours">Hor·rio de Atendimento</Label>
+          <Label htmlFor="officeHours">Hor√°rio de Atendimento</Label>
           <Textarea id="officeHours" name="officeHours" defaultValue={siteData.contact.officeHours} rows={3} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1359,7 +1361,7 @@ const SettingsContactAbout = () => {
           </div>
         </div>
       </div>
-      <Button type="submit">Salvar Todas as AlteraÁıes</Button>
+      <Button type="submit">Salvar Todas as Altera√ß√µes</Button>
     </form>
   );
 };
@@ -1369,13 +1371,13 @@ const SiteSettings = () => {
   return (
     <>
       <Helmet>
-        <title>ConfiguraÁıes do Site - Dashboard</title>
+        <title>Configura√ß√µes do Site - Dashboard</title>
       </Helmet>
       <div className="container mx-auto p-4 md:p-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">ConfiguraÁıes do Site</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-8">Configura√ß√µes do Site</h1>
         <Tabs defaultValue="contact" className="w-full">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 mb-6">
-            <TabsTrigger value="homepage">P·gina Inicial</TabsTrigger>
+            <TabsTrigger value="homepage">P√°gina Inicial</TabsTrigger>
             <TabsTrigger value="communities">Comunidades</TabsTrigger>
             <TabsTrigger value="pastorals">Pastorais</TabsTrigger>
             <TabsTrigger value="team">Adm. Paroquial</TabsTrigger>
