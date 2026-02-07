@@ -1,4 +1,4 @@
-# site-pnsc
+﻿# site-pnsc
 
 Projeto Vite + React pronto para build com Docker e deploy via EasyPanel.
 
@@ -13,29 +13,29 @@ npm install
 npm run dev
 ```
 
-## Build com Docker (produção)
+## Build com Docker (producao)
 ```bash
 docker compose up --build
 ```
 Abra `http://localhost:5000`.
 
-## Variáveis de ambiente
+## Variaveis de ambiente
 - `APP_PORT`: porta local do host (padrao `5000`)
 - `VITE_SUPABASE_URL`: URL do projeto Supabase
 - `VITE_SUPABASE_ANON_KEY`: chave anon do Supabase
-- `VITE_SUPABASE_BUCKET`: bucket do Storage (padrão `pnsc-media`)
+- `VITE_SUPABASE_BUCKET`: bucket do Storage (padrao `pnsc-media`)
 - `VITE_GOOGLE_MAPS_API_KEY`: (opcional) chave da API do Google Static Maps
 
 ## Supabase Storage
 1. Crie um projeto no Supabase.
-2. Crie um bucket público (ex: `pnsc-media`).
-3. Copie as variáveis do `.env.example` para o `.env` e preencha os valores.
-4. Se o upload retornar erro de RLS, aplique as políticas abaixo no SQL Editor:
+2. Crie um bucket publico (ex: `pnsc-media`).
+3. Copie as variaveis do `.env.example` para o `.env` e preencha os valores.
+4. Se o upload retornar erro de RLS, aplique as politicas abaixo no SQL Editor:
 ```sql
--- deixa o bucket público para leitura via getPublicUrl
+-- deixa o bucket publico para leitura via getPublicUrl
 update storage.buckets set public = true where id = 'pnsc-media';
 
--- leitura pública dos arquivos
+-- leitura publica dos arquivos
 create policy "Public read pnsc-media"
   on storage.objects for select
   using (bucket_id = 'pnsc-media');
@@ -45,12 +45,12 @@ create policy "Public insert pnsc-media"
   on storage.objects for insert
   with check (bucket_id = 'pnsc-media');
 
--- permitir remoção via dashboard
+-- permitir remocao via dashboard
 create policy "Public delete pnsc-media"
   on storage.objects for delete
   using (bucket_id = 'pnsc-media');
 ```
-5. Em produção, troque por políticas com autenticação do Supabase.
+5. Em producao, troque por politicas com autenticacao do Supabase.
 
 ## Supabase Banco de Dados (eventos/infos)
 1. No Supabase, abra o SQL Editor e execute:
@@ -70,11 +70,24 @@ create table if not exists public.events (
   time text,
   location text,
   description text,
+  community text,
+  category text,
+  recurrence text,
   created_at timestamptz default now()
+);
+
+create table if not exists public.profiles (
+  id uuid primary key references auth.users on delete cascade,
+  email text,
+  name text,
+  role text check (role in ('admin', 'secretary', 'member')) default 'member',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
 );
 
 alter table public.site_data enable row level security;
 alter table public.events enable row level security;
+alter table public.profiles enable row level security;
 
 create policy "Public read site_data"
   on public.site_data for select
@@ -92,21 +105,81 @@ create policy "Public read events"
   on public.events for select
   using (true);
 
-create policy "Public insert events"
+create policy "Managers insert events"
   on public.events for insert
-  with check (true);
+  with check (
+    exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid()
+      and p.role in ('admin', 'secretary')
+    )
+  );
 
-create policy "Public update events"
+create policy "Managers update events"
   on public.events for update
-  using (true);
+  using (
+    exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid()
+      and p.role in ('admin', 'secretary')
+    )
+  );
 
-create policy "Public delete events"
+create policy "Managers delete events"
   on public.events for delete
-  using (true);
-```
-2. Se preferir restringir acesso, substitua as políticas por regras com autenticação do Supabase.
+  using (
+    exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid()
+      and p.role in ('admin', 'secretary')
+    )
+  );
 
-Sem Supabase configurado, o site continua usando localStorage como fallback.
+create policy "Users read own profile"
+  on public.profiles for select
+  using (auth.uid() = id);
+
+create policy "Users insert own profile"
+  on public.profiles for insert
+  with check (auth.uid() = id);
+
+create policy "Users update own profile"
+  on public.profiles for update
+  using (auth.uid() = id);
+
+create policy "Admins read profiles"
+  on public.profiles for select
+  using (
+    exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid()
+      and p.role = 'admin'
+    )
+  );
+
+create policy "Admins update profiles"
+  on public.profiles for update
+  using (
+    exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid()
+      and p.role = 'admin'
+    )
+  );
+
+create policy "Admins insert profiles"
+  on public.profiles for insert
+  with check (
+    exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid()
+      and p.role = 'admin'
+    )
+  );
+```
+2. Se preferir restringir ainda mais, ajuste as politicas conforme sua regra de negocio.
+
+Sem Supabase configurado, o site continua usando localStorage como fallback para eventos.
 
 ## Publicar no GitHub
 ```bash
@@ -128,9 +201,4 @@ git push -u origin main
 7. Salve e clique em Implantar.
 
 ## Notas
-- O container expõe a porta 80 internamente (Nginx).
-
-
-
-
-
+- O container expoe a porta 80 internamente (Nginx).

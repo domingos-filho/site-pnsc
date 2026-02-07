@@ -1,6 +1,6 @@
 
 import React from 'react';
-    import { Routes, Route } from 'react-router-dom';
+    import { Routes, Route, Navigate } from 'react-router-dom';
     import { Toaster } from '@/components/ui/toaster';
     import { AuthProvider } from '@/contexts/AuthContext';
     import { DataProvider } from '@/contexts/DataContext';
@@ -16,7 +16,6 @@ import React from 'react';
     import Contact from '@/pages/Contact';
     import Login from '@/pages/Login';
     import Dashboard from '@/pages/Dashboard';
-    import ManageEvents from '@/pages/admin/ManageEvents';
     import ManageGallery from '@/pages/admin/ManageGallery';
     import ManageUsers from '@/pages/admin/ManageUsers';
     import SiteSettings from '@/pages/admin/SiteSettings';
@@ -40,7 +39,14 @@ import React from 'react';
                 <Route path="/login" element={<Login />} />
       
                 <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-                <Route path="/dashboard/events" element={<PrivateRoute requiredRole="member"><ManageEvents /></PrivateRoute>} />
+                <Route
+                  path="/dashboard/events"
+                  element={
+                    <PrivateRoute requiredRole="secretary">
+                      <Navigate to="/agenda" replace />
+                    </PrivateRoute>
+                  }
+                />
                 <Route path="/dashboard/gallery" element={<PrivateRoute requiredRole="member"><ManageGallery /></PrivateRoute>} />
                 <Route path="/dashboard/users" element={<PrivateRoute requiredRole="admin"><ManageUsers /></PrivateRoute>} />
                 <Route path="/dashboard/settings" element={<PrivateRoute requiredRole="admin"><SiteSettings /></PrivateRoute>} />

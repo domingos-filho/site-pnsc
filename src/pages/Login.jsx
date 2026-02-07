@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,27 +12,32 @@ import { useToast } from '@/components/ui/use-toast';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = login(email, password);
+    setIsSubmitting(true);
+    const result = await login(email, password);
 
     if (result.success) {
       toast({
         title: 'Login realizado!',
         description: 'Bem-vindo de volta!',
       });
-      navigate('/dashboard');
+      const destination = location.state?.from?.pathname || '/dashboard';
+      navigate(destination);
     } else {
       toast({
         title: 'Erro no login',
-        description: result.error,
+        description: result.error || 'Nao foi possivel entrar.',
         variant: 'destructive',
       });
     }
+    setIsSubmitting(false);
   };
 
   return (
@@ -85,9 +90,9 @@ const Login = () => {
               />
             </div>
 
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>
               <LogIn className="h-4 w-4 mr-2" />
-              Entrar
+              {isSubmitting ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
 

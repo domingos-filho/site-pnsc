@@ -29,6 +29,9 @@ const normalizeEvent = (input) => ({
   date: input.date || '',
   time: input.time || '',
   location: input.location || '',
+  community: input.community?.trim() || '',
+  category: input.category?.trim() || '',
+  recurrence: input.recurrence?.trim() || '',
   description: input.description || '',
 });
 

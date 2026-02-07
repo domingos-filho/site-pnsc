@@ -20,11 +20,11 @@ const Dashboard = () => {
 
   const dashboardItems = [
     {
-      name: 'Gerenciar Eventos',
-      path: '/dashboard/events',
+      name: 'Gerenciar Agenda',
+      path: '/agenda',
       icon: Calendar,
-      description: 'Adicione e edite eventos da agenda paroquial.',
-      roles: ['member', 'admin'],
+      description: 'Cadastre e edite eventos da agenda paroquial.',
+      roles: ['secretary', 'admin'],
       color: 'text-blue-600',
     },
     {
@@ -32,7 +32,7 @@ const Dashboard = () => {
       path: '/dashboard/gallery',
       icon: Image,
       description: 'Adicione, edite ou remova fotos dos eventos.',
-      roles: ['member', 'admin'],
+      roles: ['member', 'secretary', 'admin'],
       color: 'text-purple-600',
     },
     {
@@ -67,7 +67,8 @@ const Dashboard = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Dashboard</h1>
             <p className="text-xl text-blue-100">
-              Bem-vindo, {user.name}! ({user.role === 'admin' ? 'Administrador' : 'Membro'})
+              Bem-vindo, {user.name}! (
+              {user.role === 'admin' ? 'Administrador' : user.role === 'secretary' ? 'Secretario' : 'Membro'})
             </p>
           </motion.div>
         </div>
