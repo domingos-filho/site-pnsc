@@ -104,7 +104,7 @@ const YouTubeVideo = ({ url }) => {
 
   return (
     <div>
-      <div className="w-full relative" style={{ paddingTop: '56.25%' }}>
+      <div className="w-full relative" style={{ paddingTop: '36.25%' }}>
         <iframe
           className="absolute top-0 left-0 w-full h-full rounded-xl shadow-2xl"
           src={embedUrl}

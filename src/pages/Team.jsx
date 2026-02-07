@@ -51,7 +51,7 @@ const Team = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
           >
-            Adm. Paroquial
+            Administração Paroquial
           </motion.h1>
           <motion.p
             className="mt-4 text-lg max-w-3xl mx-auto text-blue-100"
