@@ -43,8 +43,8 @@ const Login = () => {
   return (
     <>
       <Helmet>
-        <title>Login - ParÃ³quia de Nossa Senhora da ConceiÃ§Ã£o</title>
-        <meta name="description" content="Ãrea de login para membros e administradores da parÃ³quia." />
+        <title>Login - Paróquia de Nossa Senhora da Conceição</title>
+        <meta name="description" content="Área de login para membros e administradores da paróquia." />
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center py-12 px-4">
@@ -56,10 +56,10 @@ const Login = () => {
           <div className="text-center mb-8">
             <img
               src="/assets/BRASAO_DA_PAROQUIA.png"
-              alt="BrasÃ£o da ParÃ³quia"
+              alt="Brasão da Paróquia"
               className="h-24 w-24 mx-auto mb-4"
             />
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Ãrea de Login</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Área de Login</h1>
             <p className="text-gray-600">Acesse sua conta</p>
           </div>
 
@@ -86,7 +86,7 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="mt-1"
-                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                placeholder="********"
               />
             </div>
 
@@ -99,7 +99,7 @@ const Login = () => {
           <div className="mt-6 p-4 bg-blue-50 rounded-lg">
             <p className="text-sm text-gray-700 font-semibold mb-2">Importante:</p>
             <p className="text-xs text-gray-600">
-              Voce coordenador/Aticulador que precisa gerenciar o site, entre em contato com a nossa
+              Você coordenador/articulador que precisa gerenciar o site, entre em contato com a nossa
               PASCOM para adquirir suas credenciais!
             </p>
           </div>

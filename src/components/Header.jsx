@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, LogOut, Menu, User, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,7 +11,7 @@ const Header = () => {
   const navigate = useNavigate();
 
   const menuItems = [
-    { name: 'InÃ­cio', path: '/', end: true },
+    { name: 'Início', path: '/', end: true },
     { name: 'Comunidades', path: '/comunidades' },
     { name: 'Pastorais', path: '/pastorais' },
     { name: 'Galeria', path: '/galeria' },
@@ -48,12 +48,12 @@ const Header = () => {
           <Link to="/" className="flex items-center space-x-3 h-full">
             <img
               src="/assets/BRASAO_DA_PAROQUIA.png"
-              alt="BrasÃ£o da ParÃ³quia"
+              alt="Brasão da Paróquia"
               className="h-full py-2 object-contain"
             />
             <div className="flex flex-col -space-y-1">
-              <span className="text-lg font-bold text-blue-800">ParÃ³quia de Nossa Senhora da</span>
-              <span className="text-4xl text-blue-600 font-priestacy font-bold">ConceiÃ§Ã£o</span>
+              <span className="text-lg font-bold text-blue-800">Paróquia de Nossa Senhora da</span>
+              <span className="text-4xl text-blue-600 font-priestacy font-bold">Conceição</span>
             </div>
           </Link>
 

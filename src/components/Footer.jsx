@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
@@ -7,7 +7,7 @@ const Footer = () => {
   const { siteData, loading } = useData();
 
   const quickLinks = [
-    { name: 'InÃ­cio', path: '/' },
+    { name: 'Início', path: '/' },
     { name: 'Comunidades', path: '/comunidades' },
     { name: 'Pastorais', path: '/pastorais' },
     { name: 'Galeria', path: '/galeria' },
@@ -29,16 +29,16 @@ const Footer = () => {
             <div className="w-full h-32 mb-4 flex items-center justify-center">
               <img
                 src="/assets/BRASAO_DA_PAROQUIA_branco.png"
-                alt="Igreja Matriz de Nossa Senhora da ConceiÃ§Ã£o"
+                alt="Igreja Matriz de Nossa Senhora da Conceição"
                 className="max-h-full max-w-full object-contain"
               />
             </div>
-            <span className="font-bold block">ParÃ³quia de Nossa Senhora da ConceiÃ§Ã£o</span>
+            <span className="font-bold block">Paróquia de Nossa Senhora da Conceição</span>
             <p className="text-blue-100 text-sm mt-1">Nova Parnamirim - Parnamirim/RN</p>
           </div>
 
           <div>
-            <span className="font-bold text-lg mb-4 block">Links RÃ¡pidos</span>
+            <span className="font-bold text-lg mb-4 block">Links Rápidos</span>
             <ul className="space-y-2">
               {quickLinks.map((link) => (
                 <li key={link.path}>
@@ -103,14 +103,14 @@ const Footer = () => {
               )}
             </div>
             <div className="text-sm text-blue-100 whitespace-pre-line">
-              <p className="font-semibold mb-1">HorÃ¡rio de Atendimento:</p>
+              <p className="font-semibold mb-1">Horário de Atendimento:</p>
               <p>{contact.officeHours}</p>
             </div>
           </div>
         </div>
 
         <div className="border-t border-blue-600 mt-8 pt-6 text-center text-sm text-blue-200">
-          <p>Â© {new Date().getFullYear()} ParÃ³quia de Nossa Senhora da ConceiÃ§Ã£o. Todos os direitos reservados.</p>
+          <p>© {new Date().getFullYear()} Paróquia de Nossa Senhora da Conceição. Todos os direitos reservados.</p>
           <p className="mt-1">Arquidiocese de Natal/RN</p>
         </div>
       </div>
