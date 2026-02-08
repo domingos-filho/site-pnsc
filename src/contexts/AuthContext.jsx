@@ -35,8 +35,8 @@ const mapUser = (authUser, profile) => {
   };
 };
 
-const loadProfile = async (authUser) => {
-  if (!authUser || !isSupabaseReady) return null;
+const fetchProfile = async (authUser) => {
+  if (!authUser || !isSupabaseReady) return { profile: null, error: null };
 
   try {
     const { data, error } = await supabase
@@ -47,33 +47,13 @@ const loadProfile = async (authUser) => {
 
     if (error) {
       console.error('Falha ao carregar perfil', error);
-      return null;
+      return { profile: null, error };
     }
 
-    if (data) return data;
-
-    const payload = {
-      id: authUser.id,
-      email: authUser.email,
-      name: getFallbackName(authUser),
-      role: 'member',
-    };
-
-    const { data: inserted, error: insertError } = await supabase
-      .from('profiles')
-      .insert(payload)
-      .select('id, name, role, email')
-      .single();
-
-    if (insertError) {
-      console.error('Falha ao criar perfil', insertError);
-      return payload;
-    }
-
-    return inserted || payload;
+    return { profile: data, error: null };
   } catch (error) {
     console.error('Falha ao carregar perfil', error);
-    return null;
+    return { profile: null, error };
   }
 };
 
@@ -98,9 +78,14 @@ export const AuthProvider = ({ children }) => {
       if (!isMounted) return;
 
       if (sessionUser) {
-        const profile = await loadProfile(sessionUser);
+        const { profile, error } = await fetchProfile(sessionUser);
         if (!isMounted) return;
-        setUser(mapUser(sessionUser, profile));
+        if (!profile || error) {
+          await supabase.auth.signOut();
+          setUser(null);
+        } else {
+          setUser(mapUser(sessionUser, profile));
+        }
       } else {
         setUser(null);
       }
@@ -116,9 +101,14 @@ export const AuthProvider = ({ children }) => {
         if (!isMounted) return;
         const sessionUser = session?.user;
         if (sessionUser) {
-          const profile = await loadProfile(sessionUser);
+          const { profile, error } = await fetchProfile(sessionUser);
           if (!isMounted) return;
-          setUser(mapUser(sessionUser, profile));
+          if (!profile || error) {
+            await supabase.auth.signOut();
+            setUser(null);
+          } else {
+            setUser(mapUser(sessionUser, profile));
+          }
         } else {
           setUser(null);
         }
@@ -148,7 +138,14 @@ export const AuthProvider = ({ children }) => {
 
     const sessionUser = data?.user;
     if (sessionUser) {
-      const profile = await loadProfile(sessionUser);
+      const { profile } = await fetchProfile(sessionUser);
+      if (!profile) {
+        await supabase.auth.signOut();
+        return {
+          success: false,
+          error: 'Usuario nao autorizado. Contate a PASCOM.',
+        };
+      }
       setUser(mapUser(sessionUser, profile));
     }
 
