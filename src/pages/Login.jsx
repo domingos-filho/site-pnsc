@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -43,8 +43,8 @@ const Login = () => {
   return (
     <>
       <Helmet>
-        <title>Login - Paróquia de Nossa Senhora da Conceição</title>
-        <meta name="description" content="Área de login para membros e administradores da paróquia." />
+        <title>Login - ParÃ³quia de Nossa Senhora da ConceiÃ§Ã£o</title>
+        <meta name="description" content="Ãrea de login para membros e administradores da parÃ³quia." />
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center py-12 px-4">
@@ -55,11 +55,11 @@ const Login = () => {
         >
           <div className="text-center mb-8">
             <img
-              src="https://horizons-cdn.hostinger.com/8926cfa8-6425-4293-b55f-e15069c2a814/105e1d822f2ce62f221e65e8659a802a.png"
-              alt="Brasão da Paróquia"
+              src="/assets/BRASAO_DA_PAROQUIA.png"
+              alt="BrasÃ£o da ParÃ³quia"
               className="h-24 w-24 mx-auto mb-4"
             />
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Área de Login</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Ãrea de Login</h1>
             <p className="text-gray-600">Acesse sua conta</p>
           </div>
 
@@ -86,7 +86,7 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="mt-1"
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
               />
             </div>
 
@@ -110,3 +110,4 @@ const Login = () => {
 };
 
 export default Login;
+

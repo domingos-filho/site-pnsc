@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, LogOut, Menu, User, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,7 +11,7 @@ const Header = () => {
   const navigate = useNavigate();
 
   const menuItems = [
-    { name: 'Início', path: '/', end: true },
+    { name: 'InÃ­cio', path: '/', end: true },
     { name: 'Comunidades', path: '/comunidades' },
     { name: 'Pastorais', path: '/pastorais' },
     { name: 'Galeria', path: '/galeria' },
@@ -47,13 +47,13 @@ const Header = () => {
         <div className="flex items-center justify-between h-24">
           <Link to="/" className="flex items-center space-x-3 h-full">
             <img
-              src="https://horizons-cdn.hostinger.com/8926cfa8-6425-4293-b55f-e15069c2a814/105e1d822f2ce62f221e65e8659a802a.png"
-              alt="Brasão da Paróquia"
+              src="/assets/BRASAO_DA_PAROQUIA.png"
+              alt="BrasÃ£o da ParÃ³quia"
               className="h-full py-2 object-contain"
             />
             <div className="flex flex-col -space-y-1">
-              <span className="text-lg font-bold text-blue-800">Paróquia de Nossa Senhora da</span>
-              <span className="text-4xl text-blue-600 font-priestacy font-bold">Conceição</span>
+              <span className="text-lg font-bold text-blue-800">ParÃ³quia de Nossa Senhora da</span>
+              <span className="text-4xl text-blue-600 font-priestacy font-bold">ConceiÃ§Ã£o</span>
             </div>
           </Link>
 
@@ -156,4 +156,5 @@ const Header = () => {
 };
 
 export default Header;
+
 

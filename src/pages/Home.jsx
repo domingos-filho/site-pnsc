@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -19,12 +19,12 @@ const HeroSection = () => {
             transition={{ duration: 0.8 }}
           >
             <h1 className="text-4xl md:text-5xl font-extrabold text-blue-900 leading-tight">
-              Bem-vindo à sua casa de fé
+              Bem-vindo Ã  sua casa de fÃ©
             </h1>
             <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">{siteData.home.welcomeMessage}</p>
             <Link to="/quem-somos">
               <Button size="lg" className="mt-8">
-                Conheça nossa história <ArrowRight className="ml-2 h-5 w-5" />
+                ConheÃ§a nossa histÃ³ria <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
           </motion.div>
@@ -80,6 +80,8 @@ const CarouselSection = () => {
 
 const PatronessSection = () => {
   const { siteData } = useData();
+  const fallbackImage = '/assets/Imagem_da_Santa.png';
+  const patronessSrc = siteData.home.patronessImage || fallbackImage;
 
   return (
     <section className="bg-white py-20">
@@ -93,9 +95,12 @@ const PatronessSection = () => {
             viewport={{ once: true }}
           >
             <img
-              src={siteData.home.patronessImage}
-              alt="Imagem de Nossa Senhora da Conceição"
+              src={patronessSrc}
+              alt="Imagem de Nossa Senhora da ConceiÃ§Ã£o"
               className="max-h-96"
+              onError={(event) => {
+                event.currentTarget.src = fallbackImage;
+              }}
             />
           </motion.div>
           <motion.div
@@ -105,7 +110,7 @@ const PatronessSection = () => {
             viewport={{ once: true }}
           >
             <h2 className="text-3xl md:text-4xl font-bold text-blue-900 mb-4">
-              Nossa Padroeira, Nossa Senhora da Conceição
+              Nossa Padroeira, Nossa Senhora da ConceiÃ§Ã£o
             </h2>
             <p className="text-lg text-gray-600 leading-relaxed">{siteData.home.patronessText}</p>
           </motion.div>
@@ -157,10 +162,10 @@ const Home = () => {
   return (
     <>
       <Helmet>
-        <title>Início - Paróquia de Nossa Senhora da Conceição</title>
+        <title>InÃ­cio - ParÃ³quia de Nossa Senhora da ConceiÃ§Ã£o</title>
         <meta
           name="description"
-          content="Bem-vindo ao site da Paróquia de Nossa Senhora da Conceição em Nova Parnamirim. Conheça nossa comunidade, agenda de eventos, pastorais e muito mais."
+          content="Bem-vindo ao site da ParÃ³quia de Nossa Senhora da ConceiÃ§Ã£o em Nova Parnamirim. ConheÃ§a nossa comunidade, agenda de eventos, pastorais e muito mais."
         />
       </Helmet>
       <motion.div
@@ -179,3 +184,4 @@ const Home = () => {
 };
 
 export default Home;
+
