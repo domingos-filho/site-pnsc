@@ -89,6 +89,50 @@ alter table public.site_data enable row level security;
 alter table public.events enable row level security;
 alter table public.profiles enable row level security;
 
+-- helper functions (avoid RLS recursion)
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+set row_security = off
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid()
+    and role = 'admin'
+  );
+$$;
+
+create or replace function public.is_manager()
+returns boolean
+language sql
+security definer
+set search_path = public
+set row_security = off
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid()
+    and role in ('admin', 'secretary')
+  );
+$$;
+
+-- clean old policies (safe to re-run)
+drop policy if exists "Public read site_data" on public.site_data;
+drop policy if exists "Public write site_data" on public.site_data;
+drop policy if exists "Public update site_data" on public.site_data;
+drop policy if exists "Public read events" on public.events;
+drop policy if exists "Managers insert events" on public.events;
+drop policy if exists "Managers update events" on public.events;
+drop policy if exists "Managers delete events" on public.events;
+drop policy if exists "Users read own profile" on public.profiles;
+drop policy if exists "Users insert own profile" on public.profiles;
+drop policy if exists "Users update own profile" on public.profiles;
+drop policy if exists "Admins read profiles" on public.profiles;
+drop policy if exists "Admins update profiles" on public.profiles;
+drop policy if exists "Admins insert profiles" on public.profiles;
+
 create policy "Public read site_data"
   on public.site_data for select
   using (true);
@@ -107,76 +151,32 @@ create policy "Public read events"
 
 create policy "Managers insert events"
   on public.events for insert
-  with check (
-    exists (
-      select 1 from public.profiles p
-      where p.id = auth.uid()
-      and p.role in ('admin', 'secretary')
-    )
-  );
+  with check (public.is_manager());
 
 create policy "Managers update events"
   on public.events for update
-  using (
-    exists (
-      select 1 from public.profiles p
-      where p.id = auth.uid()
-      and p.role in ('admin', 'secretary')
-    )
-  );
+  using (public.is_manager());
 
 create policy "Managers delete events"
   on public.events for delete
-  using (
-    exists (
-      select 1 from public.profiles p
-      where p.id = auth.uid()
-      and p.role in ('admin', 'secretary')
-    )
-  );
+  using (public.is_manager());
 
-create policy "Users read own profile"
+create policy "Profiles read"
   on public.profiles for select
-  using (auth.uid() = id);
+  using (auth.uid() = id or public.is_admin());
 
-create policy "Users insert own profile"
+create policy "Profiles insert"
   on public.profiles for insert
-  with check (auth.uid() = id);
+  with check (auth.uid() = id or public.is_admin());
 
-create policy "Users update own profile"
+create policy "Profiles update"
   on public.profiles for update
-  using (auth.uid() = id);
-
-create policy "Admins read profiles"
-  on public.profiles for select
-  using (
-    exists (
-      select 1 from public.profiles p
-      where p.id = auth.uid()
-      and p.role = 'admin'
-    )
-  );
-
-create policy "Admins update profiles"
-  on public.profiles for update
-  using (
-    exists (
-      select 1 from public.profiles p
-      where p.id = auth.uid()
-      and p.role = 'admin'
-    )
-  );
-
-create policy "Admins insert profiles"
-  on public.profiles for insert
-  with check (
-    exists (
-      select 1 from public.profiles p
-      where p.id = auth.uid()
-      and p.role = 'admin'
-    )
-  );
+  using (auth.uid() = id or public.is_admin())
+  with check (auth.uid() = id or public.is_admin());
 ```
+
+Observacao: o login so funciona se o usuario tiver registro na tabela public.profiles.
+
 2. Se preferir restringir ainda mais, ajuste as politicas conforme sua regra de negocio.
 
 Sem Supabase configurado, o site continua usando localStorage como fallback para eventos.

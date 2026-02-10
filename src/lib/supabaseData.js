@@ -4,6 +4,15 @@ const SITE_DATA_TABLE = 'site_data';
 const SITE_DATA_ID = 1;
 const EVENTS_TABLE = 'events';
 const LOCAL_EVENTS_KEY = 'paroquia_events';
+const REQUEST_TIMEOUT_MS = 15000;
+
+const withTimeout = (promise, ms, message) => {
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(message)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+};
 
 const safeJsonParse = (value, fallback) => {
   if (!value) return fallback;
@@ -42,11 +51,15 @@ const createLocalId = () =>
 
 export const fetchSiteData = async () => {
   if (!isSupabaseReady) return null;
-  const { data, error } = await supabase
-    .from(SITE_DATA_TABLE)
-    .select('data')
-    .eq('id', SITE_DATA_ID)
-    .maybeSingle();
+  const { data, error } = await withTimeout(
+    supabase
+      .from(SITE_DATA_TABLE)
+      .select('data')
+      .eq('id', SITE_DATA_ID)
+      .maybeSingle(),
+    REQUEST_TIMEOUT_MS,
+    'Tempo limite ao carregar dados do site.'
+  );
 
   if (error) {
     throw error;
@@ -60,15 +73,19 @@ export const upsertSiteData = async (payload) => {
     throw new Error('Supabase not configured');
   }
 
-  const { data, error } = await supabase
-    .from(SITE_DATA_TABLE)
-    .upsert({
-      id: SITE_DATA_ID,
-      data: payload,
-      updated_at: new Date().toISOString(),
-    })
-    .select('data')
-    .single();
+  const { data, error } = await withTimeout(
+    supabase
+      .from(SITE_DATA_TABLE)
+      .upsert({
+        id: SITE_DATA_ID,
+        data: payload,
+        updated_at: new Date().toISOString(),
+      })
+      .select('data')
+      .single(),
+    REQUEST_TIMEOUT_MS,
+    'Tempo limite ao salvar dados do site.'
+  );
 
   if (error) {
     throw error;
@@ -85,10 +102,14 @@ export const loadEvents = async ({ useLocalFallback = true } = {}) => {
   }
 
   try {
-    const { data, error } = await supabase
-      .from(EVENTS_TABLE)
-      .select('*')
-      .order('date', { ascending: true });
+    const { data, error } = await withTimeout(
+      supabase
+        .from(EVENTS_TABLE)
+        .select('*')
+        .order('date', { ascending: true }),
+      REQUEST_TIMEOUT_MS,
+      'Tempo limite ao carregar eventos.'
+    );
 
     if (error) {
       throw error;
@@ -136,11 +157,15 @@ export const createEvent = async (input) => {
   }
 
   try {
-    const { data, error } = await supabase
-      .from(EVENTS_TABLE)
-      .insert(payload)
-      .select('*')
-      .single();
+    const { data, error } = await withTimeout(
+      supabase
+        .from(EVENTS_TABLE)
+        .insert(payload)
+        .select('*')
+        .single(),
+      REQUEST_TIMEOUT_MS,
+      'Tempo limite ao criar evento.'
+    );
 
     if (error) {
       throw error;
@@ -174,12 +199,16 @@ export const updateEvent = async (id, input) => {
   }
 
   try {
-    const { data, error } = await supabase
-      .from(EVENTS_TABLE)
-      .update(payload)
-      .eq('id', id)
-      .select('*')
-      .single();
+    const { data, error } = await withTimeout(
+      supabase
+        .from(EVENTS_TABLE)
+        .update(payload)
+        .eq('id', id)
+        .select('*')
+        .single(),
+      REQUEST_TIMEOUT_MS,
+      'Tempo limite ao atualizar evento.'
+    );
 
     if (error) {
       throw error;
@@ -207,10 +236,11 @@ export const deleteEvent = async (id) => {
 
   if (isSupabaseReady) {
     try {
-      const { error: deleteError } = await supabase
-        .from(EVENTS_TABLE)
-        .delete()
-        .eq('id', id);
+      const { error: deleteError } = await withTimeout(
+        supabase.from(EVENTS_TABLE).delete().eq('id', id),
+        REQUEST_TIMEOUT_MS,
+        'Tempo limite ao remover evento.'
+      );
 
       if (deleteError) {
         throw deleteError;

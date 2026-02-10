@@ -31,8 +31,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { deleteStoragePaths, isSupabaseReady, uploadImageFile } from '@/lib/supabaseStorage';
 
-<meta charset="UTF-8" />
-
 const showSyncWarning = (toast) => {
   toast({
     title: 'Aviso',
