@@ -1190,6 +1190,7 @@ const SettingsContactAbout = () => {
           email: formData.get('email'),
           whatsapp: formData.get('whatsapp'),
           officeHours: formData.get('officeHours'),
+          massSchedule: formData.get('massSchedule'),
           social: {
             facebook: formData.get('facebook'),
             instagram: formData.get('instagram'),
@@ -1343,6 +1344,15 @@ const SettingsContactAbout = () => {
         <div className="space-y-1">
           <Label htmlFor="officeHours">Horário de Atendimento</Label>
           <Textarea id="officeHours" name="officeHours" defaultValue={siteData.contact.officeHours} rows={3} />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="massSchedule">Horários de Missas</Label>
+          <Textarea
+            id="massSchedule"
+            name="massSchedule"
+            defaultValue={siteData.contact.massSchedule || ''}
+            rows={3}
+          />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-1">

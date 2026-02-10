@@ -201,6 +201,7 @@ const initialSiteData = {
     email: 'pnsc.arquivos@gmail.com',
     whatsapp: '5584000000000',
     officeHours: 'Segunda a Sexta: 8h às 17h\nSábado: 8h às 12h',
+    massSchedule: 'Domingo: 7h, 9h e 18h\nQuarta-feira: 19h\nSábado: 7h',
     mapLat: '-5.881957586566276',
     mapLng: '-35.19923210144043',
     mapImageUrl: null,

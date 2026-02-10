@@ -106,6 +106,12 @@ const Footer = () => {
               <p className="font-semibold mb-1">Horário de Atendimento:</p>
               <p>{contact.officeHours}</p>
             </div>
+            {contact.massSchedule && (
+              <div className="text-sm text-blue-100 whitespace-pre-line mt-3">
+                <p className="font-semibold mb-1">Horários de Missas:</p>
+                <p>{contact.massSchedule}</p>
+              </div>
+            )}
           </div>
         </div>
 
