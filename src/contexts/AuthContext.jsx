@@ -9,6 +9,16 @@ const ROLE_LEVELS = {
   admin: 3,
 };
 
+const REQUEST_TIMEOUT_MS = 15000;
+
+const withTimeout = (promise, ms, message) => {
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(message)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+};
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -39,11 +49,15 @@ const fetchProfile = async (authUser) => {
   if (!authUser || !isSupabaseReady) return { profile: null, error: null };
 
   try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, name, role, email')
-      .eq('id', authUser.id)
-      .maybeSingle();
+    const { data, error } = await withTimeout(
+      supabase
+        .from('profiles')
+        .select('id, name, role, email')
+        .eq('id', authUser.id)
+        .maybeSingle(),
+      REQUEST_TIMEOUT_MS,
+      'Tempo limite ao carregar perfil.'
+    );
 
     if (error) {
       console.error('Falha ao carregar perfil', error);
@@ -73,8 +87,22 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      const { data } = await supabase.auth.getSession();
-      const sessionUser = data?.session?.user;
+      let sessionUser = null;
+      try {
+        const { data } = await withTimeout(
+          supabase.auth.getSession(),
+          REQUEST_TIMEOUT_MS,
+          'Tempo limite ao verificar sessao.'
+        );
+        sessionUser = data?.session?.user || null;
+      } catch (error) {
+        console.error('Falha ao carregar sessao', error);
+        if (isMounted) {
+          setUser(null);
+          setLoading(false);
+        }
+        return;
+      }
       if (!isMounted) return;
 
       if (sessionUser) {
@@ -127,10 +155,22 @@ export const AuthProvider = ({ children }) => {
       return { success: false, error: 'Supabase nao configurado.' };
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    let data;
+    let error;
+    try {
+      const response = await withTimeout(
+        supabase.auth.signInWithPassword({
+          email,
+          password,
+        }),
+        REQUEST_TIMEOUT_MS,
+        'Tempo limite ao autenticar. Verifique sua conexao e o Supabase.'
+      );
+      data = response.data;
+      error = response.error;
+    } catch (err) {
+      return { success: false, error: err?.message || 'Falha ao autenticar.' };
+    }
 
     if (error) {
       return { success: false, error: error.message };
@@ -138,12 +178,14 @@ export const AuthProvider = ({ children }) => {
 
     const sessionUser = data?.user;
     if (sessionUser) {
-      const { profile } = await fetchProfile(sessionUser);
+      const { profile, error: profileError } = await fetchProfile(sessionUser);
       if (!profile) {
         await supabase.auth.signOut();
         return {
           success: false,
-          error: 'Usuario nao autorizado. Contate a PASCOM.',
+          error: profileError
+            ? 'Nao foi possivel validar o perfil. Tente novamente.'
+            : 'Usuario nao autorizado. Contate a PASCOM.',
         };
       }
       setUser(mapUser(sessionUser, profile));
