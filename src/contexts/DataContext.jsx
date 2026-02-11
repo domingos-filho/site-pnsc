@@ -60,6 +60,29 @@ const initialSiteData = {
       'https://imagedelivery.net/LqiWLm-3MGbYHtFuUbcBtA/869c9b13-f939-4d64-a691-88f01b35b600/public',
     patronessImagePath: null,
     patronessThumbPath: null,
+    newsSettings: {
+      autoplay: true,
+      intervalSeconds: 6,
+    },
+    news: [
+      {
+        id: 1,
+        title: 'Aviso Importante',
+        summary: 'Confira os comunicados e avisos da nossa paróquia.',
+        content: '',
+        date: '2026-02-01',
+        category: 'Comunicado',
+        ctaLabel: '',
+        ctaUrl: '',
+        pinned: true,
+        startAt: '',
+        endAt: '',
+        image: '',
+        imagePath: null,
+        thumb: '',
+        thumbPath: null,
+      },
+    ],
   },
   communities: [
     {

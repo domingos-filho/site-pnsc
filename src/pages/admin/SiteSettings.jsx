@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
@@ -84,6 +84,22 @@ const SettingsHomePage = () => {
   const [heroFiles, setHeroFiles] = useState([]);
   const [patronessFile, setPatronessFile] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isNewsDialogOpen, setIsNewsDialogOpen] = useState(false);
+  const [editingNews, setEditingNews] = useState(null);
+  const [newsImageFile, setNewsImageFile] = useState(null);
+  const [isSavingNews, setIsSavingNews] = useState(false);
+  const [newsSettings, setNewsSettings] = useState(() => ({
+    autoplay: siteData.home.newsSettings?.autoplay ?? true,
+    intervalSeconds: siteData.home.newsSettings?.intervalSeconds ?? 6,
+  }));
+  const [isSavingNewsSettings, setIsSavingNewsSettings] = useState(false);
+
+  useEffect(() => {
+    setNewsSettings({
+      autoplay: siteData.home.newsSettings?.autoplay ?? true,
+      intervalSeconds: siteData.home.newsSettings?.intervalSeconds ?? 6,
+    });
+  }, [siteData.home.newsSettings]);
 
   const onHeroDrop = useCallback((acceptedFiles) => {
     const imageFiles = acceptedFiles.map((file) =>
@@ -111,6 +127,23 @@ const SettingsHomePage = () => {
     [patronessFile]
   );
 
+  const onNewsDrop = useCallback(
+    (acceptedFiles) => {
+      if (acceptedFiles[0]) {
+        if (newsImageFile?.preview) {
+          URL.revokeObjectURL(newsImageFile.preview);
+        }
+        const file = acceptedFiles[0];
+        setNewsImageFile(
+          Object.assign(file, {
+            preview: URL.createObjectURL(file),
+          })
+        );
+      }
+    },
+    [newsImageFile]
+  );
+
   const {
     getRootProps: getHeroRootProps,
     getInputProps: getHeroInputProps,
@@ -126,6 +159,16 @@ const SettingsHomePage = () => {
     isDragActive: isPatronessDragActive,
   } = useDropzone({
     onDrop: onPatronessDrop,
+    accept: { 'image/*': [] },
+    multiple: false,
+  });
+
+  const {
+    getRootProps: getNewsRootProps,
+    getInputProps: getNewsInputProps,
+    isDragActive: isNewsDragActive,
+  } = useDropzone({
+    onDrop: onNewsDrop,
     accept: { 'image/*': [] },
     multiple: false,
   });
@@ -290,8 +333,175 @@ const SettingsHomePage = () => {
     }
   };
 
+  const newsItems = Array.isArray(siteData.home.news) ? siteData.home.news : [];
+
+  const openNewsDialog = (item = null) => {
+    setEditingNews(item);
+    setNewsImageFile(null);
+    setIsNewsDialogOpen(true);
+  };
+
+  const closeNewsDialog = () => {
+    if (newsImageFile?.preview) {
+      URL.revokeObjectURL(newsImageFile.preview);
+    }
+    setNewsImageFile(null);
+    setEditingNews(null);
+    setIsNewsDialogOpen(false);
+  };
+
+  const handleSaveNews = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const payload = {
+      id: editingNews?.id || Date.now(),
+      title: (formData.get('newsTitle') || '').trim(),
+      summary: (formData.get('newsSummary') || '').trim(),
+      content: (formData.get('newsContent') || '').trim(),
+      date: formData.get('newsDate') || new Date().toISOString().slice(0, 10),
+      category: (formData.get('newsCategory') || '').trim(),
+      ctaLabel: (formData.get('newsCtaLabel') || '').trim(),
+      ctaUrl: (formData.get('newsCtaUrl') || '').trim(),
+      pinned: formData.get('newsPinned') === 'on',
+      startAt: formData.get('newsStartAt') || '',
+      endAt: formData.get('newsEndAt') || '',
+      image: editingNews?.image || '',
+      imagePath: editingNews?.imagePath || null,
+      thumb: editingNews?.thumb || '',
+      thumbPath: editingNews?.thumbPath || null,
+    };
+
+    if (newsImageFile && !isSupabaseReady) {
+      toast({
+        title: 'Erro',
+        description: 'Supabase não configurado para upload.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSavingNews(true);
+    try {
+      if (newsImageFile) {
+        const result = await uploadImageFile({
+          file: newsImageFile,
+          folder: 'home/news',
+          generateThumbnail: true,
+          thumbnailMaxWidth: 1100,
+          thumbnailMaxHeight: 800,
+        });
+        payload.image = result.publicUrl;
+        payload.imagePath = result.path;
+        payload.thumb = result.thumbUrl || result.publicUrl;
+        payload.thumbPath = result.thumbPath || null;
+
+        if (editingNews?.imagePath && editingNews.imagePath !== result.path) {
+          try {
+            await deleteStoragePaths([editingNews.imagePath]);
+          } catch (error) {
+            toast({ title: 'Aviso', description: 'Não foi possível remover a imagem antiga.' });
+          }
+        }
+
+        if (editingNews?.thumbPath && editingNews.thumbPath !== payload.thumbPath) {
+          try {
+            await deleteStoragePaths([editingNews.thumbPath]);
+          } catch (error) {
+            toast({ title: 'Aviso', description: 'Não foi possível remover a miniatura antiga.' });
+          }
+        }
+      }
+
+      const updatedNews = editingNews
+        ? newsItems.map((item) => (item.id === editingNews.id ? { ...item, ...payload } : item))
+        : [{ ...payload }, ...newsItems];
+
+      const result = await updateSiteData({
+        ...siteData,
+        home: {
+          ...siteData.home,
+          news: updatedNews,
+        },
+      });
+
+      if (!result.ok) {
+        showSyncWarning(toast);
+      } else {
+        toast({ title: 'Sucesso!', description: `Notícia ${editingNews ? 'atualizada' : 'criada'}.` });
+      }
+
+      closeNewsDialog();
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: error?.message || 'Falha ao salvar a notícia.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingNews(false);
+    }
+  };
+
+  const handleDeleteNews = async (id) => {
+    const itemToDelete = newsItems.find((item) => item.id === id);
+    if ((itemToDelete?.imagePath || itemToDelete?.thumbPath) && isSupabaseReady) {
+      try {
+        await deleteStoragePaths([itemToDelete.imagePath, itemToDelete.thumbPath].filter(Boolean));
+      } catch (error) {
+        toast({ title: 'Aviso', description: 'Não foi possível remover a imagem do storage.' });
+      }
+    }
+
+    const updatedNews = newsItems.filter((item) => item.id !== id);
+    const result = await updateSiteData({
+      ...siteData,
+      home: {
+        ...siteData.home,
+        news: updatedNews,
+      },
+    });
+
+    if (!result.ok) {
+      showSyncWarning(toast);
+    } else {
+      toast({ title: 'Sucesso!', description: 'Notícia removida.' });
+    }
+  };
+
+  const handleSaveNewsSettings = async () => {
+    setIsSavingNewsSettings(true);
+    const sanitizedInterval = Math.max(2, Math.min(30, Number(newsSettings.intervalSeconds || 6)));
+    const payload = {
+      autoplay: Boolean(newsSettings.autoplay),
+      intervalSeconds: sanitizedInterval,
+    };
+    try {
+      const result = await updateSiteData({
+        ...siteData,
+        home: {
+          ...siteData.home,
+          newsSettings: payload,
+        },
+      });
+      if (!result.ok) {
+        showSyncWarning(toast);
+      } else {
+        toast({ title: 'Sucesso!', description: 'Configurações de notícias atualizadas.' });
+      }
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: error?.message || 'Falha ao salvar configurações.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingNewsSettings(false);
+    }
+  };
+
   return (
-    <form onSubmit={handleFormSubmit} className="space-y-8">
+    <div className="space-y-10">
+      <form onSubmit={handleFormSubmit} className="space-y-8">
       <div className="space-y-2">
         <Label htmlFor="welcomeMessage" className="text-lg font-semibold">
           Mensagem de Boas-Vindas
@@ -414,10 +624,245 @@ const SettingsHomePage = () => {
           </div>
         </div>
       </div>
-      <Button type="submit" disabled={isSaving}>
-        {isSaving ? 'Salvando...' : 'Salvar alterações da página inicial'}
-      </Button>
-    </form>
+        <Button type="submit" disabled={isSaving}>
+          {isSaving ? 'Salvando...' : 'Salvar alterações da página inicial'}
+        </Button>
+      </form>
+
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-lg font-semibold">Notícias e Divulgações</h3>
+          <Button type="button" onClick={() => openNewsDialog()}>
+            <Plus className="h-4 w-4 mr-2" />
+            Adicionar Notícia
+          </Button>
+        </div>
+
+        <div className="rounded-lg border border-blue-100 bg-blue-50/40 p-4 space-y-3">
+          <h4 className="font-semibold text-gray-800">Configurações do carrossel</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={newsSettings.autoplay}
+                onChange={(event) =>
+                  setNewsSettings((prev) => ({ ...prev, autoplay: event.target.checked }))
+                }
+              />
+              Autoplay do carrossel
+            </label>
+            <div className="space-y-1">
+              <Label htmlFor="newsInterval">Intervalo (segundos)</Label>
+              <Input
+                id="newsInterval"
+                type="number"
+                min="2"
+                max="30"
+                value={newsSettings.intervalSeconds}
+                onChange={(event) =>
+                  setNewsSettings((prev) => ({ ...prev, intervalSeconds: event.target.value }))
+                }
+              />
+            </div>
+          </div>
+          <Button
+            type="button"
+            onClick={handleSaveNewsSettings}
+            disabled={isSavingNewsSettings}
+          >
+            {isSavingNewsSettings ? 'Salvando...' : 'Salvar configurações'}
+          </Button>
+        </div>
+
+        {newsItems.length === 0 ? (
+          <p className="text-sm text-gray-500">Nenhuma notícia cadastrada.</p>
+        ) : (
+          <div className="space-y-3">
+            <AnimatePresence>
+              {newsItems.map((item) => (
+                <CrudItem key={item.id} item={item} onEdit={openNewsDialog} onDelete={handleDeleteNews}>
+                  <div className="flex items-center gap-4">
+                    <div className="h-16 w-24 rounded-md bg-blue-50 overflow-hidden flex items-center justify-center">
+                      {item.thumb || item.image ? (
+                        <img
+                          src={item.thumb || item.image}
+                          alt={item.title}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-xs text-blue-700">Sem imagem</span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">{item.title}</p>
+                      <p className="text-xs text-gray-500">
+                        {item.category || 'Sem categoria'} {item.date ? `• ${item.date}` : ''}
+                      </p>
+                      <p className="text-sm text-gray-600">{item.summary}</p>
+                    </div>
+                  </div>
+                </CrudItem>
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+
+      <Dialog
+        open={isNewsDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) closeNewsDialog();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingNews ? 'Editar' : 'Adicionar'} Notícia</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveNews} className="space-y-4">
+            <div className="space-y-1">
+              <Label htmlFor="newsTitle">Título</Label>
+              <Input
+                id="newsTitle"
+                name="newsTitle"
+                defaultValue={editingNews?.title}
+                required
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="newsSummary">Resumo</Label>
+              <Textarea
+                id="newsSummary"
+                name="newsSummary"
+                defaultValue={editingNews?.summary}
+                rows={3}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="newsContent">Texto completo</Label>
+              <Textarea
+                id="newsContent"
+                name="newsContent"
+                defaultValue={editingNews?.content}
+                rows={4}
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="newsDate">Data</Label>
+                <Input
+                  id="newsDate"
+                  name="newsDate"
+                  type="date"
+                  defaultValue={editingNews?.date || ''}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="newsCategory">Categoria</Label>
+                <Input
+                  id="newsCategory"
+                  name="newsCategory"
+                  defaultValue={editingNews?.category}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="newsCtaLabel">Texto do botão (opcional)</Label>
+                <Input
+                  id="newsCtaLabel"
+                  name="newsCtaLabel"
+                  defaultValue={editingNews?.ctaLabel}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="newsCtaUrl">Link (opcional)</Label>
+                <Input
+                  id="newsCtaUrl"
+                  name="newsCtaUrl"
+                  defaultValue={editingNews?.ctaUrl}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="newsStartAt">Mostrar a partir de</Label>
+                <Input
+                  id="newsStartAt"
+                  name="newsStartAt"
+                  type="date"
+                  defaultValue={editingNews?.startAt || ''}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="newsEndAt">Expira em</Label>
+                <Input
+                  id="newsEndAt"
+                  name="newsEndAt"
+                  type="date"
+                  defaultValue={editingNews?.endAt || ''}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="newsPinned"
+                name="newsPinned"
+                type="checkbox"
+                defaultChecked={editingNews?.pinned}
+              />
+              <Label htmlFor="newsPinned">Fixar como destaque</Label>
+            </div>
+            <div className="space-y-2">
+              <Label>Imagem</Label>
+              <div
+                {...getNewsRootProps()}
+                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition-colors"
+              >
+                <input {...getNewsInputProps()} />
+                <UploadCloud className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                {isNewsDragActive ? (
+                  <p>Solte a imagem aqui...</p>
+                ) : (
+                  <p>Arraste uma imagem ou clique para selecionar</p>
+                )}
+              </div>
+              <div className="flex items-center gap-4">
+                {editingNews?.thumb || editingNews?.image ? (
+                  <div>
+                    <p className="text-sm font-semibold">Imagem atual:</p>
+                    <img
+                      src={editingNews.thumb || editingNews.image}
+                      alt="Atual"
+                      className="w-24 h-16 object-cover rounded bg-gray-200 mt-1"
+                    />
+                  </div>
+                ) : null}
+                {newsImageFile && (
+                  <div>
+                    <p className="text-sm font-semibold">Nova imagem:</p>
+                    <img
+                      src={newsImageFile.preview}
+                      alt="Nova"
+                      className="w-24 h-16 object-cover rounded bg-gray-200 mt-1"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="secondary" disabled={isSavingNews}>
+                  Cancelar
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={isSavingNews}>
+                {isSavingNews ? 'Salvando...' : 'Salvar'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 // #endregion

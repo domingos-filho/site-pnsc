@@ -1,9 +1,19 @@
-import React from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Calendar, Church, Image as ImageIcon, Phone, Users } from 'lucide-react';
+import {
+  ArrowRight,
+  Calendar,
+  Church,
+  Image as ImageIcon,
+  Phone,
+  Users,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useData } from '@/contexts/DataContext';
 
 const HeroSection = () => {
@@ -168,6 +178,197 @@ const Shortcuts = () => {
   );
 };
 
+const NewsSection = () => {
+  const { siteData } = useData();
+  const [selectedNews, setSelectedNews] = useState(null);
+  const scrollerRef = useRef(null);
+
+  const now = new Date();
+  const settings = siteData.home.newsSettings || { autoplay: true, intervalSeconds: 6 };
+  const items = (siteData.home.news || [])
+    .filter((item) => {
+      const startAt = item.startAt ? new Date(item.startAt) : null;
+      const endAt = item.endAt ? new Date(item.endAt) : null;
+      if (startAt && now < startAt) return false;
+      if (endAt && now > endAt) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const pinDiff = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned));
+      if (pinDiff !== 0) return pinDiff;
+      const dateA = a.date ? new Date(a.date) : new Date(0);
+      const dateB = b.date ? new Date(b.date) : new Date(0);
+      return dateB - dateA;
+    });
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  const formatDate = (value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString('pt-BR');
+  };
+
+  const scrollByAmount = useCallback((direction) => {
+    if (!scrollerRef.current) return;
+    const amount = scrollerRef.current.clientWidth * 0.9;
+    scrollerRef.current.scrollBy({ left: amount * direction, behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    if (!settings.autoplay || items.length < 2) return;
+    const intervalMs = Math.max(2000, Number(settings.intervalSeconds || 6) * 1000);
+    const timer = setInterval(() => scrollByAmount(1), intervalMs);
+    return () => clearInterval(timer);
+  }, [items.length, scrollByAmount, settings.autoplay, settings.intervalSeconds]);
+
+  return (
+    <>
+      <section className="bg-white py-16">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-blue-900">Notícias e Divulgações</h2>
+              <p className="text-gray-600 mt-2">Fique por dentro dos avisos e novidades da nossa paróquia.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => scrollByAmount(-1)}
+                aria-label="Voltar"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => scrollByAmount(1)}
+                aria-label="Avançar"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div
+            ref={scrollerRef}
+            className="flex gap-6 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory"
+          >
+            {items.map((item) => (
+              <article
+                key={item.id}
+                className="min-w-[280px] sm:min-w-[360px] lg:min-w-[420px] snap-start bg-white border border-blue-100 rounded-2xl shadow-sm hover:shadow-lg transition-shadow"
+              >
+                <button
+                  type="button"
+                  className="block w-full text-left"
+                  onClick={() => setSelectedNews(item)}
+                >
+                  <div className="h-48 bg-blue-50 rounded-t-2xl overflow-hidden flex items-center justify-center">
+                    {item.thumb || item.image ? (
+                      <img
+                        src={item.thumb || item.image}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : (
+                      <div className="text-blue-700 font-semibold">Sem imagem</div>
+                    )}
+                  </div>
+                  <div className="p-5 space-y-3">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-blue-700 font-semibold">
+                      {item.category && (
+                        <span className="px-2 py-1 bg-blue-100 rounded-full">{item.category}</span>
+                      )}
+                      {item.pinned && (
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full">Destaque</span>
+                      )}
+                      {item.date && <span className="text-gray-500">{formatDate(item.date)}</span>}
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">{item.title}</h3>
+                    <p className="text-sm text-gray-600">{item.summary}</p>
+                  </div>
+                </button>
+                <div className="px-5 pb-5 flex justify-between items-center">
+                  {item.ctaUrl ? (
+                    <a
+                      href={item.ctaUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-700 font-semibold text-sm hover:underline"
+                    >
+                      {item.ctaLabel || 'Saiba mais'}
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      className="text-blue-700 font-semibold text-sm hover:underline"
+                      onClick={() => setSelectedNews(item)}
+                    >
+                      Saiba mais
+                    </button>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <Dialog open={Boolean(selectedNews)} onOpenChange={(open) => !open && setSelectedNews(null)}>
+        <DialogContent className="max-w-2xl">
+          {selectedNews && (
+            <div className="space-y-4">
+              <div className="h-52 rounded-xl overflow-hidden bg-blue-50 flex items-center justify-center">
+                {selectedNews.image || selectedNews.thumb ? (
+                  <img
+                    src={selectedNews.image || selectedNews.thumb}
+                    alt={selectedNews.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="text-blue-700 font-semibold">Sem imagem</div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-2 text-xs text-blue-700 font-semibold">
+                  {selectedNews.category && (
+                    <span className="px-2 py-1 bg-blue-100 rounded-full">{selectedNews.category}</span>
+                  )}
+                  {selectedNews.date && <span className="text-gray-500">{formatDate(selectedNews.date)}</span>}
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900">{selectedNews.title}</h3>
+                <p className="text-gray-600 whitespace-pre-line">
+                  {selectedNews.content || selectedNews.summary}
+                </p>
+              </div>
+              {selectedNews.ctaUrl && (
+                <a
+                  href={selectedNews.ctaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-blue-700 font-semibold hover:underline"
+                >
+                  {selectedNews.ctaLabel || 'Saiba mais'}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </a>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
 const Home = () => {
   return (
     <>
@@ -186,6 +387,7 @@ const Home = () => {
       >
         <HeroSection />
         <CarouselSection />
+        <NewsSection />
         <PatronessSection />
         <Shortcuts />
       </motion.div>
