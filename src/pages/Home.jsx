@@ -50,19 +50,26 @@ const CarouselSection = () => {
     return null;
   }
 
+  const currentImage = siteData.home.heroImages[currentIndex];
+  const currentImageSrc = currentImage?.thumbSrc || currentImage?.src;
+
   return (
     <section className="relative w-full h-[60vh] overflow-hidden bg-blue-900">
-      {siteData.home.heroImages.map((image, index) => (
-        <motion.div
-          key={image.id}
-          className="absolute inset-0 w-full h-full"
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ opacity: index === currentIndex ? 1 : 0, scale: index === currentIndex ? 1 : 1.05 }}
-          transition={{ duration: 1.5, ease: 'easeInOut' }}
-        >
-          <img src={image.src} alt={image.alt} className="w-full h-full object-contain" />
-        </motion.div>
-      ))}
+      <motion.div
+        key={currentImage?.id}
+        className="absolute inset-0 w-full h-full"
+        initial={{ opacity: 0, scale: 1.05 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1.1, ease: 'easeInOut' }}
+      >
+        <img
+          src={currentImageSrc}
+          alt={currentImage?.alt}
+          className="w-full h-full object-contain"
+          loading="eager"
+          decoding="async"
+        />
+      </motion.div>
       <div className="absolute inset-0 bg-black/30" />
       <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white p-4">
         <motion.h2
@@ -81,7 +88,8 @@ const CarouselSection = () => {
 const PatronessSection = () => {
   const { siteData } = useData();
   const fallbackImage = '/assets/Imagem_da_Santa.png';
-  const patronessSrc = siteData.home.patronessImage || fallbackImage;
+  const patronessSrc =
+    siteData.home.patronessThumb || siteData.home.patronessImage || fallbackImage;
 
   return (
     <section className="bg-white py-20">
@@ -101,6 +109,8 @@ const PatronessSection = () => {
               onError={(event) => {
                 event.currentTarget.src = fallbackImage;
               }}
+              loading="lazy"
+              decoding="async"
             />
           </motion.div>
           <motion.div

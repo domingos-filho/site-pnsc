@@ -109,7 +109,13 @@ const CommunityDetail = () => {
                         key={image.path || image.src || index}
                         className="rounded-lg overflow-hidden shadow-lg"
                       >
-                        <img className="w-full h-48 object-cover" alt={image.alt} src={image.src} />
+                        <img
+                          className="w-full h-48 object-cover"
+                          alt={image.alt}
+                          src={image.thumbSrc || image.src}
+                          loading="lazy"
+                          decoding="async"
+                        />
                       </div>
                     ))}
                   </div>

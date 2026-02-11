@@ -36,16 +36,19 @@ const initialSiteData = {
       {
         id: 1,
         src: 'https://images.unsplash.com/photo-1508385932222-cd395c28a927?q=80&w=2070&auto=format&fit=crop',
+        thumbSrc: 'https://images.unsplash.com/photo-1508385932222-cd395c28a927?q=80&w=2070&auto=format&fit=crop',
         alt: 'Interior de uma igreja com vitrais coloridos',
       },
       {
         id: 2,
         src: 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a9ae?q=80&w=2070&auto=format&fit=crop',
+        thumbSrc: 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a9ae?q=80&w=2070&auto=format&fit=crop',
         alt: 'Pessoas rezando em uma missa',
       },
       {
         id: 3,
         src: 'https://images.unsplash.com/photo-1513818693935-7523c2641d29?q=80&w=2070&auto=format&fit=crop',
+        thumbSrc: 'https://images.unsplash.com/photo-1513818693935-7523c2641d29?q=80&w=2070&auto=format&fit=crop',
         alt: 'Altar de uma igreja decorado para uma celebração',
       },
     ],
@@ -53,7 +56,10 @@ const initialSiteData = {
       'Sob a proteção de Nossa Senhora da Conceição, nossa comunidade se une em fé e devoção. Que seu exemplo de pureza e amor nos inspire a cada dia a sermos melhores servos de Deus e irmãos uns dos outros. Ela é nosso refúgio e fortaleza, guiando nossos passos no caminho da salvação.',
     patronessImage:
       'https://imagedelivery.net/LqiWLm-3MGbYHtFuUbcBtA/869c9b13-f939-4d64-a691-88f01b35b600/public',
+    patronessThumb:
+      'https://imagedelivery.net/LqiWLm-3MGbYHtFuUbcBtA/869c9b13-f939-4d64-a691-88f01b35b600/public',
     patronessImagePath: null,
+    patronessThumbPath: null,
   },
   communities: [
     {
@@ -265,46 +271,35 @@ export const DataProvider = ({ children }) => {
   useEffect(() => {
     let isMounted = true;
 
-    const loadData = async () => {
-      setLoading(true);
+    const localData = readLocalSiteData() || initialSiteData;
+    if (isMounted) {
+      setSiteData(localData);
+      setLoading(false);
+    }
+
+    const syncSupabase = async () => {
+      if (!isSupabaseReady) return;
       try {
-        let data = null;
-
-        if (isSupabaseReady) {
-          data = await fetchSiteData();
-        }
-
-        if (!data) {
-          const localData = readLocalSiteData();
-          data = localData || initialSiteData;
-          writeLocalSiteData(data);
-
-          if (isSupabaseReady) {
-            try {
-              await upsertSiteData(data);
-            } catch (error) {
-              console.error('Failed to seed Supabase site data', error);
-            }
+        const remoteData = await fetchSiteData();
+        if (remoteData) {
+          writeLocalSiteData(remoteData);
+          if (isMounted) {
+            setSiteData(remoteData);
           }
+          return;
         }
 
-        if (isMounted) {
-          setSiteData(data);
+        try {
+          await upsertSiteData(localData);
+        } catch (error) {
+          console.error('Failed to seed Supabase site data', error);
         }
       } catch (error) {
         console.error('Failed to load site data', error);
-        const fallback = readLocalSiteData() || initialSiteData;
-        if (isMounted) {
-          setSiteData(fallback);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
       }
     };
 
-    loadData();
+    syncSupabase();
     return () => {
       isMounted = false;
     };
@@ -333,5 +328,5 @@ export const DataProvider = ({ children }) => {
     loading,
   };
 
-  return <DataContext.Provider value={value}>{!loading && children}</DataContext.Provider>;
+  return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 };

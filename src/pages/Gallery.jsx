@@ -100,9 +100,11 @@ const Gallery = () => {
                             aria-label="Ampliar foto"
                           >
                             <img
-                              src={photo.url}
+                              src={photo.thumbUrl || photo.url}
                               alt={`Foto do album ${album.name}`}
                               className="w-full h-48 object-contain bg-white"
+                              loading="lazy"
+                              decoding="async"
                             />
                           </button>
                         </motion.div>

@@ -104,7 +104,9 @@ const ManageGallery = ({ onUpdate }) => {
     const updatedAlbums = albums.filter((album) => album.id !== id);
     const albumPhotos = photos.filter((photo) => photo.albumId === id);
     const updatedPhotos = photos.filter((photo) => photo.albumId !== id);
-    const storagePaths = albumPhotos.map((photo) => photo.path).filter(Boolean);
+    const storagePaths = albumPhotos
+      .flatMap((photo) => [photo.path, photo.thumbPath])
+      .filter(Boolean);
 
     if (storagePaths.length > 0 && isSupabaseReady) {
       try {
@@ -174,7 +176,15 @@ const ManageGallery = ({ onUpdate }) => {
     setIsUploading(true);
     try {
       const results = await Promise.allSettled(
-        files.map((file) => uploadImageFile({ file, folder: `gallery/${currentAlbum.id}` }))
+        files.map((file) =>
+          uploadImageFile({
+            file,
+            folder: `gallery/${currentAlbum.id}`,
+            generateThumbnail: true,
+            thumbnailMaxWidth: 900,
+            thumbnailMaxHeight: 900,
+          })
+        )
       );
 
       const uploaded = [];
@@ -207,6 +217,8 @@ const ManageGallery = ({ onUpdate }) => {
         albumId: currentAlbum.id,
         url: item.publicUrl,
         path: item.path,
+        thumbUrl: item.thumbUrl || item.publicUrl,
+        thumbPath: item.thumbPath || null,
       }));
 
       savePhotos([...photos, ...newPhotos]);
@@ -231,9 +243,9 @@ const ManageGallery = ({ onUpdate }) => {
 
   const handleDeletePhoto = async (photoId) => {
     const photoToDelete = photos.find((p) => p.id === photoId);
-    if (photoToDelete?.path && isSupabaseReady) {
+    if ((photoToDelete?.path || photoToDelete?.thumbPath) && isSupabaseReady) {
       try {
-        await deleteStoragePaths([photoToDelete.path]);
+        await deleteStoragePaths([photoToDelete.path, photoToDelete.thumbPath].filter(Boolean));
       } catch (error) {
         toast({ title: 'Aviso', description: 'Não foi possível remover o arquivo do storage.' });
       }
@@ -367,7 +379,7 @@ const ManageGallery = ({ onUpdate }) => {
                           onClick={() => setPreviewPhoto(photo)}
                         >
                           <img
-                            src={photo.url}
+                            src={photo.thumbUrl || photo.url}
                             className="w-full h-32 object-contain bg-white rounded-md"
                             alt=""
                           />

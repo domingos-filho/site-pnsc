@@ -12,7 +12,13 @@ const TeamMemberCard = ({ member, index }) => (
     transition={{ duration: 0.5, delay: index * 0.15 }}
   >
     <div className="aspect-[4/4] bg-gray-200">
-      <img src={member.image} alt={`Foto de ${member.name}`} className="w-full h-full object-cover object-center" />
+      <img
+        src={member.imageThumb || member.image}
+        alt={`Foto de ${member.name}`}
+        className="w-full h-full object-cover object-center"
+        loading="lazy"
+        decoding="async"
+      />
     </div>
     <div className="p-3 flex flex-col gap-1">
       <h3 className="text-lg font-bold text-gray-800">{member.name}</h3>

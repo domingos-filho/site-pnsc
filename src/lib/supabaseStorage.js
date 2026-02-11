@@ -29,6 +29,70 @@ const uniqueSuffix = () => {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 };
 
+const loadImageFromFile = async (file) => {
+  if (typeof createImageBitmap === 'function') {
+    try {
+      return await createImageBitmap(file, { imageOrientation: 'from-image' });
+    } catch (error) {
+      // fallback to Image element
+    }
+  }
+
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(img);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Falha ao carregar a imagem para miniatura.'));
+    };
+    img.src = url;
+  });
+};
+
+const createThumbnailFile = async (file, { maxWidth = 800, maxHeight = 800, quality = 0.82 } = {}) => {
+  const image = await loadImageFromFile(file);
+  const width = image.width || image.naturalWidth || 0;
+  const height = image.height || image.naturalHeight || 0;
+
+  if (!width || !height) {
+    throw new Error('Nao foi possivel ler as dimensoes da imagem.');
+  }
+
+  const scale = Math.min(maxWidth / width, maxHeight / height, 1);
+  const targetWidth = Math.max(1, Math.round(width * scale));
+  const targetHeight = Math.max(1, Math.round(height * scale));
+
+  const canvas = document.createElement('canvas');
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    throw new Error('Nao foi possivel criar o canvas da miniatura.');
+  }
+
+  ctx.drawImage(image, 0, 0, targetWidth, targetHeight);
+
+  const isPng = file.type === 'image/png';
+  const outputType = isPng ? 'image/png' : 'image/jpeg';
+
+  const blob = await new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (result) => (result ? resolve(result) : reject(new Error('Falha ao gerar miniatura.'))),
+      outputType,
+      isPng ? undefined : quality
+    );
+  });
+
+  const baseName = safeFileName(file.name || 'imagem').replace(/\.[^/.]+$/, '') || 'imagem';
+  const extension = outputType === 'image/png' ? 'png' : 'jpg';
+  return new File([blob], `${baseName}-thumb.${extension}`, { type: outputType });
+};
+
 const formatStorageError = (error, fallbackMessage) => {
   if (!error) return fallbackMessage;
   const message = error?.message || String(error);
@@ -53,7 +117,14 @@ const formatStorageError = (error, fallbackMessage) => {
   return message;
 };
 
-export const uploadImageFile = async ({ file, folder }) => {
+export const uploadImageFile = async ({
+  file,
+  folder,
+  generateThumbnail = false,
+  thumbnailMaxWidth = 800,
+  thumbnailMaxHeight = 800,
+  thumbnailQuality = 0.82,
+} = {}) => {
   if (!supabase) {
     throw new Error('Supabase nao configurado.');
   }
@@ -64,7 +135,8 @@ export const uploadImageFile = async ({ file, folder }) => {
   }
 
   const fileName = safeFileName(file.name || 'imagem');
-  const path = `${folder}/${uniqueSuffix()}-${fileName}`;
+  const suffix = uniqueSuffix();
+  const path = `${folder}/${suffix}-${fileName}`;
   const contentType = file.type || 'application/octet-stream';
 
   const { error: uploadError } = await withTimeout(
@@ -82,10 +154,49 @@ export const uploadImageFile = async ({ file, folder }) => {
   }
 
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+  let thumbUrl = null;
+  let thumbPath = null;
+
+  if (generateThumbnail) {
+    try {
+      const thumbFile = await createThumbnailFile(file, {
+        maxWidth: thumbnailMaxWidth,
+        maxHeight: thumbnailMaxHeight,
+        quality: thumbnailQuality,
+      });
+
+      const baseName = fileName.replace(/\.[^/.]+$/, '') || 'imagem';
+      const thumbExtension = thumbFile.type === 'image/png' ? 'png' : 'jpg';
+      thumbPath = `${folder}/thumbs/${suffix}-${baseName}.${thumbExtension}`;
+
+      const { error: thumbError } = await withTimeout(
+        supabase.storage.from(bucket).upload(thumbPath, thumbFile, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: thumbFile.type,
+        }),
+        20000,
+        'Tempo limite no upload da miniatura.'
+      );
+
+      if (thumbError) {
+        throw thumbError;
+      }
+
+      const { data: thumbData } = supabase.storage.from(bucket).getPublicUrl(thumbPath);
+      thumbUrl = thumbData.publicUrl;
+    } catch (error) {
+      console.warn('Falha ao gerar/enviar miniatura', error);
+      thumbUrl = null;
+      thumbPath = null;
+    }
+  }
 
   return {
     publicUrl: data.publicUrl,
     path,
+    thumbUrl,
+    thumbPath,
   };
 };
 

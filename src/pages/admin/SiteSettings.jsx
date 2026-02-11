@@ -154,7 +154,16 @@ const SettingsHomePage = () => {
 
       if (hasHeroUpload) {
         const results = await Promise.allSettled(
-          heroFiles.map((file) => uploadImageFile({ file, folder: 'home/hero' }))
+          heroFiles.map((file) =>
+            uploadImageFile({
+              file,
+              folder: 'home/hero',
+              generateThumbnail: true,
+              thumbnailMaxWidth: 1400,
+              thumbnailMaxHeight: 900,
+              thumbnailQuality: 0.8,
+            })
+          )
         );
 
         const uploaded = [];
@@ -174,24 +183,44 @@ const SettingsHomePage = () => {
         uploadedHeroImages = uploaded.map((item, index) => ({
           id: Date.now() + index,
           src: item.publicUrl,
+          thumbSrc: item.thumbUrl || item.publicUrl,
           alt: item.file?.name || 'Imagem do banner',
           path: item.path,
+          thumbPath: item.thumbPath || null,
         }));
       }
 
       let updatedPatronessImage = siteData.home.patronessImage;
       let updatedPatronessPath = siteData.home.patronessImagePath || null;
+      let updatedPatronessThumb = siteData.home.patronessThumb || siteData.home.patronessImage;
+      let updatedPatronessThumbPath = siteData.home.patronessThumbPath || null;
 
       if (hasPatronessUpload) {
-        const result = await uploadImageFile({ file: patronessFile, folder: 'home/patroness' });
+        const result = await uploadImageFile({
+          file: patronessFile,
+          folder: 'home/patroness',
+          generateThumbnail: true,
+          thumbnailMaxWidth: 900,
+          thumbnailMaxHeight: 1200,
+        });
         updatedPatronessImage = result.publicUrl;
         updatedPatronessPath = result.path;
+        updatedPatronessThumb = result.thumbUrl || result.publicUrl;
+        updatedPatronessThumbPath = result.thumbPath || null;
 
         if (siteData.home.patronessImagePath && siteData.home.patronessImagePath !== result.path) {
           try {
             await deleteStoragePaths([siteData.home.patronessImagePath]);
           } catch (error) {
             toast({ title: 'Aviso', description: 'Não foi possível remover a imagem antiga.' });
+          }
+        }
+
+        if (siteData.home.patronessThumbPath && siteData.home.patronessThumbPath !== updatedPatronessThumbPath) {
+          try {
+            await deleteStoragePaths([siteData.home.patronessThumbPath]);
+          } catch (error) {
+            toast({ title: 'Aviso', description: 'Não foi possível remover a miniatura antiga.' });
           }
         }
       }
@@ -207,6 +236,8 @@ const SettingsHomePage = () => {
           heroImages: updatedHeroImages,
           patronessImage: updatedPatronessImage,
           patronessImagePath: updatedPatronessPath,
+          patronessThumb: updatedPatronessThumb,
+          patronessThumbPath: updatedPatronessThumbPath,
         },
       });
 
@@ -240,9 +271,9 @@ const SettingsHomePage = () => {
 
   const handleDeleteImage = async (id) => {
     const imageToDelete = siteData.home.heroImages.find((img) => img.id === id);
-    if (imageToDelete?.path && isSupabaseReady) {
+    if ((imageToDelete?.path || imageToDelete?.thumbPath) && isSupabaseReady) {
       try {
-        await deleteStoragePaths([imageToDelete.path]);
+        await deleteStoragePaths([imageToDelete.path, imageToDelete.thumbPath].filter(Boolean));
       } catch (error) {
         toast({ title: 'Aviso', description: 'Não foi possível remover a imagem do storage.' });
       }
@@ -313,7 +344,11 @@ const SettingsHomePage = () => {
                 className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
               >
                 <div className="flex items-center gap-4">
-                  <img src={image.src} alt={image.alt} className="w-20 h-20 object-contain rounded-md bg-gray-200" />
+                  <img
+                    src={image.thumbSrc || image.src}
+                    alt={image.alt}
+                    className="w-20 h-20 object-contain rounded-md bg-gray-200"
+                  />
                   <span className="text-sm text-gray-600 truncate">{image.alt}</span>
                 </div>
                 <Button
@@ -361,7 +396,7 @@ const SettingsHomePage = () => {
             <div>
               <p className="text-sm font-semibold">Imagem Atual:</p>
               <img
-                src={siteData.home.patronessImage}
+                src={siteData.home.patronessThumb || siteData.home.patronessImage}
                 alt="Padroeira Atual"
                 className="w-32 h-32 object-contain rounded bg-gray-200 mt-2"
               />
@@ -484,7 +519,13 @@ const SettingsCommunities = () => {
       if (communityFiles.length > 0) {
         const results = await Promise.allSettled(
           communityFiles.map((file) =>
-            uploadImageFile({ file, folder: `communities/${communityId}` })
+            uploadImageFile({
+              file,
+              folder: `communities/${communityId}`,
+              generateThumbnail: true,
+              thumbnailMaxWidth: 900,
+              thumbnailMaxHeight: 900,
+            })
           )
         );
 
@@ -494,6 +535,8 @@ const SettingsCommunities = () => {
             uploadedImages.push({
               src: result.value.publicUrl,
               path: result.value.path,
+              thumbSrc: result.value.thumbUrl || result.value.publicUrl,
+              thumbPath: result.value.thumbPath || null,
               alt: file?.name || `${data.name} - Foto ${communityImages.length + uploadedImages.length + 1}`,
             });
             if (file?.preview) {
@@ -526,7 +569,9 @@ const SettingsCommunities = () => {
       }
 
       if (result.ok && removedImages.length > 0 && isSupabaseReady) {
-        const removedPaths = removedImages.map((image) => image.path).filter(Boolean);
+        const removedPaths = removedImages
+          .flatMap((image) => [image.path, image.thumbPath])
+          .filter(Boolean);
         if (removedPaths.length > 0) {
           try {
             await deleteStoragePaths([...new Set(removedPaths)]);
@@ -567,7 +612,9 @@ const SettingsCommunities = () => {
     const updatedCommunities = siteData.communities.filter((c) => c.id !== id);
     const result = await updateSiteData({ ...siteData, communities: updatedCommunities });
     if (result.ok && communityToDelete?.images?.length && isSupabaseReady) {
-      const removedPaths = communityToDelete.images.map((image) => image.path).filter(Boolean);
+      const removedPaths = communityToDelete.images
+        .flatMap((image) => [image.path, image.thumbPath])
+        .filter(Boolean);
       if (removedPaths.length > 0) {
         try {
           await deleteStoragePaths([...new Set(removedPaths)]);
@@ -685,7 +732,7 @@ const SettingsCommunities = () => {
                     {communityImages.map((image, index) => (
                       <div key={image.path || image.src || index} className="relative group">
                         <img
-                          src={image.src}
+                          src={image.thumbSrc || image.src}
                           alt={image.alt || `Foto ${index + 1}`}
                           className="h-24 w-full object-cover rounded-md border"
                         />
@@ -918,17 +965,35 @@ const SettingsTeam = () => {
     try {
       let newImageSrc = currentItem?.image;
       let newImagePath = currentItem?.imagePath || null;
+      let newImageThumb = currentItem?.imageThumb || currentItem?.image || null;
+      let newImageThumbPath = currentItem?.imageThumbPath || null;
 
       if (imageFile) {
-        const result = await uploadImageFile({ file: imageFile, folder: 'team' });
+        const result = await uploadImageFile({
+          file: imageFile,
+          folder: 'team',
+          generateThumbnail: true,
+          thumbnailMaxWidth: 700,
+          thumbnailMaxHeight: 900,
+        });
         newImageSrc = result.publicUrl;
         newImagePath = result.path;
+        newImageThumb = result.thumbUrl || result.publicUrl;
+        newImageThumbPath = result.thumbPath || null;
 
         if (currentItem?.imagePath && currentItem.imagePath !== result.path) {
           try {
             await deleteStoragePaths([currentItem.imagePath]);
           } catch (error) {
             toast({ title: 'Aviso', description: 'Não foi possível remover a imagem antiga.' });
+          }
+        }
+
+        if (currentItem?.imageThumbPath && currentItem.imageThumbPath !== newImageThumbPath) {
+          try {
+            await deleteStoragePaths([currentItem.imageThumbPath]);
+          } catch (error) {
+            toast({ title: 'Aviso', description: 'Não foi possível remover a miniatura antiga.' });
           }
         }
 
@@ -940,7 +1005,16 @@ const SettingsTeam = () => {
       let updatedTeam;
       if (currentItem) {
         updatedTeam = siteData.team.map((t) =>
-          t.id === currentItem.id ? { ...t, ...data, image: newImageSrc, imagePath: newImagePath } : t
+          t.id === currentItem.id
+            ? {
+                ...t,
+                ...data,
+                image: newImageSrc,
+                imagePath: newImagePath,
+                imageThumb: newImageThumb,
+                imageThumbPath: newImageThumbPath,
+              }
+            : t
         );
       } else {
         updatedTeam = [
@@ -950,6 +1024,8 @@ const SettingsTeam = () => {
             ...data,
             image: newImageSrc || 'https://via.placeholder.com/300x400',
             imagePath: newImagePath,
+            imageThumb: newImageThumb || newImageSrc || 'https://via.placeholder.com/300x400',
+            imageThumbPath: newImageThumbPath,
           },
         ];
       }
@@ -979,9 +1055,9 @@ const SettingsTeam = () => {
 
   const handleDelete = async (id) => {
     const itemToDelete = siteData.team.find((t) => t.id === id);
-    if (itemToDelete?.imagePath && isSupabaseReady) {
+    if ((itemToDelete?.imagePath || itemToDelete?.imageThumbPath) && isSupabaseReady) {
       try {
-        await deleteStoragePaths([itemToDelete.imagePath]);
+        await deleteStoragePaths([itemToDelete.imagePath, itemToDelete.imageThumbPath].filter(Boolean));
       } catch (error) {
         toast({ title: 'Aviso', description: 'Não foi possível remover a imagem do storage.' });
       }
@@ -1012,7 +1088,11 @@ const SettingsTeam = () => {
           {siteData.team.map((item) => (
             <CrudItem key={item.id} item={item} onEdit={openDialog} onDelete={handleDelete}>
               <div className="flex items-center gap-4">
-                <img src={item.image} alt={item.name} className="w-12 h-16 object-cover rounded-md bg-gray-200" />
+                <img
+                  src={item.imageThumb || item.image}
+                  alt={item.name}
+                  className="w-12 h-16 object-cover rounded-md bg-gray-200"
+                />
                 <div>
                   <p className="font-semibold text-gray-800">{item.name}</p>
                   <p className="text-sm text-gray-500">{item.role}</p>
@@ -1065,7 +1145,7 @@ const SettingsTeam = () => {
                 <div>
                   <p className="text-sm font-semibold">Foto Atual:</p>
                   <img
-                    src={currentItem?.image || 'https://via.placeholder.com/300x400'}
+                    src={currentItem?.imageThumb || currentItem?.image || 'https://via.placeholder.com/300x400'}
                     alt="Atual"
                     className="w-24 h-32 object-cover rounded bg-gray-200 mt-1"
                   />
